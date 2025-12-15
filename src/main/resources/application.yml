@@ -1,0 +1,57 @@
+server:
+  servlet:
+    session:
+      tracking-modes: 'COOKIE'
+      timeout: 30m
+
+spring:
+  application:
+    name: app
+  profiles:
+    active: ${spring_profiles_active}
+  main:
+    allow-circular-references: true
+  
+  mongodb:
+    uri: mongodb://admin:admin123@localhost:27018/msgdb?authSource=admin
+    database: msgdb
+  
+# Legacy properties for backward compatibility
+#mongodb:
+#  database: msgdb
+#  url: mongodb://admin:admin123@localhost:27018/msgdb?authSource=admin
+  
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+
+server:
+  port: 8080
+
+  
+# Logging configuration
+logging:
+  level:
+    root: ${logging_level_root:INFO}
+    com.anchor.app: ${logging_level_app:DEBUG}
+  file:
+    name: ${logging_file_path:logs/anchor-app.log}
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  logback:
+    rollingpolicy:
+      max-file-size: ${logging_max_file_size:10MB}
+      max-history: ${logging_max_history:30}
+      total-size-cap: ${logging_total_size_cap:1GB}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+
+server:
+  port: 8080

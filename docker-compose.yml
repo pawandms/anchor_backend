@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:4.2
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27018:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+      MONGO_INITDB_DATABASE: anchor_db
+    volumes:
+      - ./mongodb/data:/data/db
+      - ./mongodb/config:/data/configdb
+    networks:
+      - anchor-network
+
+networks:
+  anchor-network:
+    driver: bridge
