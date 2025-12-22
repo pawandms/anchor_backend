@@ -26,6 +26,14 @@ spring:
   config:
     activate:
       on-profile: local
+  mvc:
+   apiversion:
+    supported: v1,v2
+    default: v1
+    use:
+      path-segment: 1
+        
+
 
 server:
   port: 8080
@@ -55,3 +63,21 @@ spring:
 
 server:
   port: 8080
+
+minio:
+  accessKey: jJTPPswMUHSkgMcLHTzI
+  secretKey: kyeAvN9OOrUulaWIoKOAx9scGy9eApQKn3eW6Bsv
+  #mediabucketName: media
+  #imgbucketName: image
+  # Widnows Local Minio
+  #accessKey: minioadmin
+  #secretKey: minioadmin
+  url: http://127.0.0.1:9000
+  bucket:
+    media: anchor-media
+    image: anchor-image
+    msg: anchor-msg
+    userProfile: anchor-profile
+           
+  
+

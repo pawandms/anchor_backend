@@ -120,6 +120,9 @@ public class EnvProp {
 
 			populateMongoDbConfig();
 
+			// Populate Minio Config
+			populateMinioConfig();
+
 			/* 
 			populateAuthConfig();
 			

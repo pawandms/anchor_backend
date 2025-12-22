@@ -137,23 +137,13 @@ public class SecurityConfig {
 
 	@Bean 
 	@Order(2)
-	SecurityFilterChain mainSecurityFilterChain(HttpSecurity http) throws Exception {
+	SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
 		http
-			.securityMatcher("/rest/**", "/auth/**", "/api/**", "/", "/views/**", 
-							"/updatesigneddoc", "/receivecall", "/fitbittoken", "/join", 
-							"/joininapp", "/chime", "/meeting", "/verify", "/mobilesurvey*", 
-							"/mobilesurveyjsnote*", "/mobilesurveyjscareplan*", "/mobileclinicalnotesuccess",
-							"/mobilecareplansuccess", "/mobilesurveysuccess*", "/switchuser", "/restoreswitchuser" )
-			.authorizeHttpRequests((authorize) -> authorize
-				
-				// Basic paths
-				.requestMatchers("/", "/views/**").permitAll()
-				
-				
-				// All other requests require authentication
+			.securityMatcher("/api/**")
+			.authorizeHttpRequests(authorize -> authorize
+				.requestMatchers("/api/*/public/**").permitAll()
 				.anyRequest().authenticated()
 			)
-			// Configure OAuth2 Resource Server for JWT tokens
 			.oauth2ResourceServer(oauth2 -> oauth2
 				.jwt(jwt -> jwt
 					.decoder(jwtDecoder(jwkSource()))
@@ -161,30 +151,24 @@ public class SecurityConfig {
 				)
 				.authenticationEntryPoint(customAuthenticationEntryPoint())
 			)
-			// Configure exception handling to return 401 for API requests
-			.exceptionHandling(exceptions -> exceptions
-				.defaultAuthenticationEntryPointFor(
-					customAuthenticationEntryPoint(),
-					new org.springframework.security.web.util.matcher.RequestHeaderRequestMatcher("X-Requested-With", "XMLHttpRequest")
-				)
-				.defaultAuthenticationEntryPointFor(
-					customAuthenticationEntryPoint(),
-					request -> request.getRequestURI().startsWith("/api/")
-				)
-				.defaultAuthenticationEntryPointFor(
-					customAuthenticationEntryPoint(),
-					request -> request.getRequestURI().startsWith("/rest/")
-				)
-				.defaultAuthenticationEntryPointFor(
-					new LoginUrlAuthenticationEntryPoint("/login"),
-					new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
-				)
-			)
 			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 			.csrf(csrf -> csrf.disable())
 			.sessionManagement(session -> session
 				.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 			);
+
+		return http.build();
+	}
+
+	@Bean 
+	@Order(3)
+	SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+		http
+			.authorizeHttpRequests(authorize -> authorize
+				.anyRequest().permitAll()
+			)
+			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+			.csrf(csrf -> csrf.disable());
 
 		return http.build();
 	}

@@ -1,4 +1,4 @@
-package com.anchor.app.oauth.enums;
+package com.anchor.app.enums;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -7,7 +7,9 @@ public enum GenderType {
 	Unknown("Unknown"),
 	Male("Male"),
 	Female("Female"),
-	Other("Other");
+	Other("Other"),
+	Not_Specify("Not_Specify"),
+	;
 	
 	
 	private String value;
