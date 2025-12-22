@@ -2,6 +2,7 @@ HELP.md
 target/
 logs/
 mongodb/
+minio/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
@@ -33,3 +34,9 @@ build/
 
 ### VS Code ###
 .vscode/
+minio/data/.minio.sys/buckets/.bloomcycle.bin/xl.meta
+minio/data/.minio.sys/buckets/.usage-cache.bin/xl.meta
+minio/data/.minio.sys/buckets/.usage-cache.bin.bkp/xl.meta
+minio/data/.minio.sys/buckets/.usage.json/xl.meta
+minio/data/.minio.sys/buckets/anchor-profile/.usage-cache.bin/xl.meta
+minio/data/.minio.sys/buckets/anchor-profile/.usage-cache.bin.bkp/xl.meta

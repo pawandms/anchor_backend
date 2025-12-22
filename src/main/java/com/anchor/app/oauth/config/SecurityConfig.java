@@ -4,6 +4,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -54,6 +55,10 @@ import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 
 import com.anchor.app.oauth.service.DatabaseRegisteredClientRepository;
 import com.anchor.app.oauth.service.DatabaseUserDetailsService;
+import com.anchor.app.oauth.model.User;
+import com.anchor.app.oauth.model.UserAuth;
+import com.anchor.app.oauth.repository.UserRepository;
+import com.anchor.app.oauth.repository.UserAuthRepository;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
@@ -72,6 +77,9 @@ public class SecurityConfig {
 
 	@Autowired
 	private DatabaseRegisteredClientRepository databaseRegisteredClientRepository;
+
+	@Autowired
+	private UserAuthRepository userAuthRepository;
 
 	//@Autowired
 	//private MongoOAuth2AuthorizationService mongoOAuth2AuthorizationService;
@@ -108,6 +116,7 @@ public class SecurityConfig {
 					.authenticationProvider(new CustomRefreshTokenAuthenticationProvider(
 							oAuth2AuthorizationService(),
 							tokenGenerator()))
+					.accessTokenResponseHandler(customTokenResponseHandler())
 					.errorResponseHandler(authenticationFailureHandler()));
 		
 		http
@@ -296,25 +305,33 @@ public class SecurityConfig {
 			String username = userDetails.getUsername();
 			
 			try {
+				// Find UserAuth by identifier (username)
+				UserAuth userAuth = userAuthRepository.findByUserName(username);
 				
-				/* 
-				com.hifinite.components.user.model.User loggedInUser = userService.getActiveUserByUsername(username);
-				if (loggedInUser != null) {
-					java.util.List<Integer> roleArray = new java.util.ArrayList<>();
-					loggedInUser.getUserRole().forEach(userRole -> roleArray.add(userRole.getRoleId()));
+				if (userAuth != null) {
+					// Find User by uid
+						
+						// Add userID (uid) and username to JWT claims
+						context.getClaims().claim("userID", userAuth.getUid());
+						context.getClaims().claim("username", userAuth.getIdentifier());
+						
+						// Add roles if needed
+						if (userAuth.getRoles() != null && !userAuth.getRoles().isEmpty()) {
+							context.getClaims().claim("roles", userAuth.getRoles());
+						}
+						
+						// Add OAuth client ID
+						String oauthClientID = context.getRegisteredClient().getClientId();
+						context.getClaims().claim("client_id", oauthClientID);
+						
+						logger.debug("Added custom claims to JWT for user: {}, userID: {}", username, userAuth.getUid());
 					
-					// Add custom claims to the JWT
-					context.getClaims().claim("userID", loggedInUser.getUserID().toString());
-					context.getClaims().claim("userTypeID", loggedInUser.getUserTypeID().toString());
-					context.getClaims().claim("roleID", roleArray);
-					context.getClaims().claim("clientID", loggedInUser.getClientID().toString());
-					String oauthClientID = context.getRegisteredClient().getClientId();
-					context.getClaims().claim("client_id", oauthClientID);
+				} else {
+					logger.warn("UserAuth not found for username: {}", username);
 				}
-					*/
 			} catch (Exception e) {
 				// Log the error but don't fail token generation
-				System.err.println("Error adding custom claims to JWT: " + e.getMessage());
+				logger.error("Error adding custom claims to JWT for user: " + username, e);
 			}
 		}
 	}
@@ -335,6 +352,11 @@ public class SecurityConfig {
     public AuthenticationFailureHandler authenticationFailureHandler() {
         return new CustomAuthenticationFailureHandler();
     }
+
+	@Bean
+	public CustomTokenResponseHandler customTokenResponseHandler() {
+		return new CustomTokenResponseHandler(userAuthRepository);
+	}
 
     @Bean
     public CustomAuthenticationEntryPoint customAuthenticationEntryPoint() {
