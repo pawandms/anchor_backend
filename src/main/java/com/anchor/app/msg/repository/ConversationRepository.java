@@ -13,9 +13,9 @@ import com.anchor.app.msg.enums.ConversationType;
 import com.anchor.app.msg.model.Conversation;
 
 @Repository
-public interface ConversationRepository extends MongoRepository<Conversation, Integer> {
+public interface ConversationRepository extends MongoRepository<Conversation, Long> {
     
-    List<Conversation> findByCreatedBy(String createdBy);
+    List<Conversation> findByCreatedBy(Long createdBy);
     
     List<Conversation> findByConversationType(ConversationType conversationType);
     
@@ -25,5 +25,5 @@ public interface ConversationRepository extends MongoRepository<Conversation, In
     List<Conversation> findByLastMessageAtBetween(Date startDate, Date endDate);
     
     @Query("{ 'admins': ?0 }")
-    List<Conversation> findByAdmin(String userId);
+    List<Conversation> findByAdmin(Long userId);
 }

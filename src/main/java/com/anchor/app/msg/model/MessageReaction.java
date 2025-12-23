@@ -14,14 +14,14 @@ import com.anchor.app.msg.enums.MsgReactionType;
 public class MessageReaction {
     
     @Id
-    private Integer id;
+    private Long id;
     
     @Indexed
     private String messageId;
     
-    private String conversationId;
+    private Long conversationId;
     
-    private String userId;
+    private Long userId;
     
     private MsgReactionType reactionType;
     
@@ -32,13 +32,6 @@ public class MessageReaction {
     }
     
     // Getters and Setters
-    public Integer getId() {
-        return id;
-    }
-    
-    public void setId(Integer id) {
-        this.id = id;
-    }
     
     public String getMessageId() {
         return messageId;
@@ -48,21 +41,6 @@ public class MessageReaction {
         this.messageId = messageId;
     }
     
-    public String getConversationId() {
-        return conversationId;
-    }
-    
-    public void setConversationId(String conversationId) {
-        this.conversationId = conversationId;
-    }
-    
-    public String getUserId() {
-        return userId;
-    }
-    
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
     
     public MsgReactionType getReactionType() {
         return reactionType;
@@ -79,4 +57,30 @@ public class MessageReaction {
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
     }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getConversationId() {
+        return conversationId;
+    }
+
+    public void setConversationId(Long conversationId) {
+        this.conversationId = conversationId;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    
 }

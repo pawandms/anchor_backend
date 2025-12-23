@@ -12,19 +12,19 @@ import com.anchor.app.msg.model.ConversationMember;
 @Repository
 public interface ConversationMemberRepository extends MongoRepository<ConversationMember, Integer> {
     
-    List<ConversationMember> findByConversationId(String conversationId);
+    List<ConversationMember> findByConversationId(Long conversationId);
     
-    List<ConversationMember> findByUserId(String userId);
+    List<ConversationMember> findByUserId(Long userId);
     
-    Optional<ConversationMember> findByConversationIdAndUserId(String conversationId, String userId);
+    Optional<ConversationMember> findByConversationIdAndUserId(Long conversationId, Long userId);
     
     @Query("{ 'conversationId': ?0, 'leftAt': null }")
-    List<ConversationMember> findActiveMembers(String conversationId);
+    List<ConversationMember> findActiveMembers(Long conversationId);
     
     @Query("{ 'userId': ?0, 'leftAt': null }")
-    List<ConversationMember> findActiveConversationsForUser(String userId);
+    List<ConversationMember> findActiveConversationsForUser(Long userId);
     
-    Long countByConversationIdAndLeftAtIsNull(String conversationId);
+    Long countByConversationIdAndLeftAtIsNull(Long conversationId);
     
-    void deleteByConversationId(String conversationId);
+    void deleteByConversationId(Long conversationId);
 }

@@ -10,10 +10,10 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class UserKey {
     
     @Id
-    private String id;
+    private Long id;
     
     @Indexed(unique = true)
-    private String userId;
+    private Long userId;
     
     // RSA public key for encrypting messages to this user
     private String publicKey;
@@ -30,26 +30,26 @@ public class UserKey {
     }
     
     // Getters and Setters
-    public String getId() {
-        return id;
-    }
-    
-    public void setId(String id) {
-        this.id = id;
-    }
-    
-    public String getUserId() {
-        return userId;
-    }
-    
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-    
     public String getPublicKey() {
         return publicKey;
     }
     
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
     public void setPublicKey(String publicKey) {
         this.publicKey = publicKey;
     }

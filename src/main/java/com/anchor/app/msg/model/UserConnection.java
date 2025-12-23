@@ -12,7 +12,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class UserConnection {
     
     @Id
-    private String id;
+    private Long id;
     
     @Indexed
     private Long userId;
@@ -40,13 +40,7 @@ public class UserConnection {
     }
     
     // Getters and Setters
-    public String getId() {
-        return id;
-    }
-    
-    public void setId(String id) {
-        this.id = id;
-    }
+   
     
     public Long getUserId() {
         return userId;
@@ -94,5 +88,13 @@ public class UserConnection {
     
     public void setRequestedBy(Long requestedBy) {
         this.requestedBy = requestedBy;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 }
