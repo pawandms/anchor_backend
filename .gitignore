@@ -40,3 +40,5 @@ minio/data/.minio.sys/buckets/.usage-cache.bin.bkp/xl.meta
 minio/data/.minio.sys/buckets/.usage.json/xl.meta
 minio/data/.minio.sys/buckets/anchor-profile/.usage-cache.bin/xl.meta
 minio/data/.minio.sys/buckets/anchor-profile/.usage-cache.bin.bkp/xl.meta
+
+src/main/resources/firebase/anchor-firebase-adminsdk.json
