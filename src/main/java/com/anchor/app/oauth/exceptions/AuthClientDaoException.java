@@ -1,6 +1,6 @@
 package com.anchor.app.oauth.exceptions;
 
-import com.anchor.app.exceptions.BaseException;
+import com.anchor.app.exception.BaseException;
 
 public class AuthClientDaoException extends BaseException {
 

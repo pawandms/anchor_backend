@@ -10,12 +10,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.anchor.app.exceptions.UserException;
+import com.anchor.app.exception.UserException;
 import com.anchor.app.model.ApiError;
 import com.anchor.app.oauth.model.OauthClientDetails;
 import com.anchor.app.oauth.service.UserService;
 import com.anchor.app.oauth.viewmodel.ClientDetailsVo;
-import com.anchor.app.vo.UserVo;
+import com.anchor.app.oauth.vo.UserVo;
 
 
 @RestController
@@ -25,6 +25,7 @@ public class AuthController {
 	@Autowired
 	private UserService userService;
 
+	/* 
 	@RequestMapping(value = "/client", method = RequestMethod.GET)
     public ResponseEntity<?> getAllClients() 
 	{
@@ -43,6 +44,7 @@ public class AuthController {
         
         return response;	
     }
+		*/
 
 	@RequestMapping(value = "/client", method = RequestMethod.POST)
     public ResponseEntity<?> createAuthClient(@RequestBody ClientDetailsVo request) 

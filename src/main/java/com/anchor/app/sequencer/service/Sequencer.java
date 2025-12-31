@@ -3,7 +3,7 @@ package com.anchor.app.sequencer.service;
 import java.util.HashMap;
 
 import com.anchor.app.config.SpringContext;
-import com.anchor.app.exceptions.SequencerException;
+import com.anchor.app.exception.SequencerException;
 import com.anchor.app.sequencer.model.Sequance;
 
 

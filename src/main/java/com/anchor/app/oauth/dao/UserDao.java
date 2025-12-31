@@ -24,16 +24,17 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 
-import com.anchor.app.exceptions.MediaServiceException;
-import com.anchor.app.exceptions.UserDaoException;
-import com.anchor.app.exceptions.UserServiceException;
+import com.anchor.app.exception.MediaServiceException;
+import com.anchor.app.exception.UserDaoException;
+import com.anchor.app.exception.UserServiceException;
+import com.anchor.app.msg.enums.VisibilityType;
+import com.anchor.app.msg.vo.SearchUserVo;
 import com.anchor.app.oauth.enums.UserStatusType;
-import com.anchor.app.oauth.enums.VisibilityType;
 import com.anchor.app.oauth.exceptions.ConversionException;
 import com.anchor.app.oauth.model.User;
 import com.anchor.app.oauth.repository.UserRepository;
 import com.anchor.app.util.HelperBean;
-import com.anchor.app.vo.SearchUserVo;
+
 
 
 @Component
@@ -81,7 +82,7 @@ public class UserDao {
 	}
 
 	@Cacheable(value="UserCache", key="#userID")
-	public User getUserByUserID(Long userID) throws UserDaoException
+	public User getUserByUserID(String userID) throws UserDaoException
 	{
 		User result = null;
 		try {
@@ -165,7 +166,7 @@ public class UserDao {
 		return result;
 	}
 
-	public void activateUserId(Long uid, String userName, Date modT) throws UserDaoException
+	public void activateUserId(String uid, String userName, Date modT) throws UserDaoException
 	{
 		try {
 			
@@ -196,7 +197,7 @@ public class UserDao {
 	}
 	
 	@CacheEvict(value="UserCache", key="#uid")
-	public void updateUserProfileContentId(Long uid, String modUserID, String contentID, Date modT) throws UserDaoException
+	public void updateUserProfileContentId(String uid, String modUserID, String contentID, Date modT) throws UserDaoException
 	{
 		try {
 			
@@ -226,7 +227,7 @@ public class UserDao {
 	
 	
 	@CacheEvict(value="UserCache", key="#uid")
-	public void updateUserProfileType(String modUserID, Long uid, VisibilityType profileType, Date modT) throws UserDaoException
+	public void updateUserProfileType(String modUserID, String uid, VisibilityType profileType, Date modT) throws UserDaoException
 	{
 		
 		try {
@@ -255,7 +256,7 @@ public class UserDao {
 
 	
 	@CacheEvict(value="UserCache", key="#uid")
-	public void updateUserLoginStatus(Long uid, Date modT) throws UserDaoException
+	public void updateUserLoginStatus(String uid, Date modT) throws UserDaoException
 	{
 		
 		try {
@@ -300,7 +301,7 @@ public class UserDao {
 					try {
 						SearchUserVo su = helper.convertUserToSearchUser(user);
 						searchUsers.add(su);
-					} catch (ConversionException e) {
+					} catch (Exception e) {
 					
 						throw new RuntimeException(e.getMessage(), e);
 					}

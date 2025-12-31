@@ -3,8 +3,8 @@ package com.anchor.app.vo;
 import java.io.Serializable;
 
 import com.anchor.app.enums.GenderType;
+import com.anchor.app.msg.enums.VisibilityType;
 import com.anchor.app.oauth.enums.UserRoleType;
-import com.anchor.app.oauth.enums.VisibilityType;
 import com.anchor.app.oauth.model.UserVerifyToken;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 

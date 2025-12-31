@@ -79,5 +79,16 @@ minio:
     msg: anchor-msg
     userProfile: anchor-profile
            
-  
+nats:
+    server:
+      url: nats://192.168.0.62:4222
+    
+socketio:
+    server: 
+       host: 192.168.0.62
+       port: 8878
 
+firebase:
+    service:
+       file: firebase\anchor-firebase-adminsdk.json   
+  

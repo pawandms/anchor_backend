@@ -8,7 +8,8 @@ import org.springframework.data.mongodb.core.index.TextIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-import com.anchor.app.oauth.enums.VisibilityType;
+import com.anchor.app.msg.enums.VisibilityType;
+
 
 
 
@@ -21,9 +22,9 @@ public class User implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	@Id
-	private Long id;
+	private String id;
 
-    private Long uid;
+    private String uid;
     //User name
     @Field("userName")
 	private String userName;
@@ -62,29 +63,32 @@ public class User implements Serializable {
     @TextIndexed 
     private String lastName;
     
-    private Long createdBy;
+    private String createdBy;
     private Date createdDate;
-    private Long modifiedBy;
+    private String modifiedBy;
     private Date modifiedDate;
     
     private VisibilityType profileType;
     private Date lastLogin;
     
     private Integer type;
-	public Long getId() {
+	
+	
+
+	public String getId() {
 		return id;
 	}
-	public void setId(Long id) {
+	public void setId(String id) {
 		this.id = id;
 	}
-	public Long getUid() {
+	public String getUid() {
 		return uid;
 	}
-	public void setUid(Long uid) {
+	public void setUid(String uid) {
 		this.uid = uid;
 	}
-	
 	public String getUserName() {
+		
 		return userName;
 	}
 	public void setUserName(String userName) {
@@ -211,16 +215,17 @@ public class User implements Serializable {
 	
 		
 	
-	public Long getCreatedBy() {
+	
+	public String getCreatedBy() {
 		return createdBy;
 	}
-	public void setCreatedBy(Long createdBy) {
+	public void setCreatedBy(String createdBy) {
 		this.createdBy = createdBy;
 	}
-	public Long getModifiedBy() {
+	public String getModifiedBy() {
 		return modifiedBy;
 	}
-	public void setModifiedBy(Long modifiedBy) {
+	public void setModifiedBy(String modifiedBy) {
 		this.modifiedBy = modifiedBy;
 	}
 	public Date getLastLogin() {

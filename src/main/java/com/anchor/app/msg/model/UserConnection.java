@@ -3,98 +3,82 @@ package com.anchor.app.msg.model;
 import java.util.Date;
 
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.CompoundIndex;
-import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "user_connections")
-@CompoundIndex(name = "user_connection_idx", def = "{'userId': 1, 'connectedUserId': 1}", unique = true)
+import com.anchor.app.msg.enums.UserConnectionStatusType;
+
+@Document(collection= "userConnection")
 public class UserConnection {
-    
-    @Id
-    private Long id;
-    
-    @Indexed
-    private Long userId;
-    
-    @Indexed
-    private Long connectedUserId;
-    
-    private ConnectionStatus status; // PENDING, ACCEPTED, BLOCKED
-    
-    private Date requestedAt;
-    private Date acceptedAt;
-    
-    private Long requestedBy; // Who sent the connection request
-    
-    public UserConnection() {
-        this.status = ConnectionStatus.PENDING;
-        this.requestedAt = new Date();
-    }
-    
-    public enum ConnectionStatus {
-        PENDING,
-        ACCEPTED,
-        BLOCKED,
-        REJECTED
-    }
-    
-    // Getters and Setters
-   
-    
-    public Long getUserId() {
-        return userId;
-    }
-    
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-    
-    public Long getConnectedUserId() {
-        return connectedUserId;
-    }
-    
-    public void setConnectedUserId(Long connectedUserId) {
-        this.connectedUserId = connectedUserId;
-    }
-    
-    public ConnectionStatus getStatus() {
-        return status;
-    }
-    
-    public void setStatus(ConnectionStatus status) {
-        this.status = status;
-    }
-    
-    public Date getRequestedAt() {
-        return requestedAt;
-    }
-    
-    public void setRequestedAt(Date requestedAt) {
-        this.requestedAt = requestedAt;
-    }
-    
-    public Date getAcceptedAt() {
-        return acceptedAt;
-    }
-    
-    public void setAcceptedAt(Date acceptedAt) {
-        this.acceptedAt = acceptedAt;
-    }
-    
-    public Long getRequestedBy() {
-        return requestedBy;
-    }
-    
-    public void setRequestedBy(Long requestedBy) {
-        this.requestedBy = requestedBy;
-    }
+	
+	@Id
+	private String id;
+	
+	// Common Key between Src and Trg User Ids 
+	private String connectionId; 
+	private String srcUserId;
+	private String trgUserId;
+	private UserConnectionStatusType status;
+	private String createdBy;
+	private Date createdOn;
+	private String modifiedBy;
+	private Date modifiedOn;
 
-    public Long getId() {
-        return id;
-    }
+	public String getId() {
+		return id;
+	}
+	public void setId(String id) {
+		this.id = id;
+	}
+	
+	public String getConnectionId() {
+		return connectionId;
+	}
+	public void setConnectionId(String connectionId) {
+		this.connectionId = connectionId;
+	}
+	public String getSrcUserId() {
+		return srcUserId;
+	}
+	public void setSrcUserId(String srcUserId) {
+		this.srcUserId = srcUserId;
+	}
+	public String getTrgUserId() {
+		return trgUserId;
+	}
+	public void setTrgUserId(String trgUserId) {
+		this.trgUserId = trgUserId;
+	}
+	public UserConnectionStatusType getStatus() {
+		return status;
+	}
+	public void setStatus(UserConnectionStatusType status) {
+		this.status = status;
+	}
+	public String getCreatedBy() {
+		return createdBy;
+	}
+	public void setCreatedBy(String createdBy) {
+		this.createdBy = createdBy;
+	}
+	public Date getCreatedOn() {
+		return createdOn;
+	}
+	public void setCreatedOn(Date createdOn) {
+		this.createdOn = createdOn;
+	}
+	public String getModifiedBy() {
+		return modifiedBy;
+	}
+	public void setModifiedBy(String modifiedBy) {
+		this.modifiedBy = modifiedBy;
+	}
+	public Date getModifiedOn() {
+		return modifiedOn;
+	}
+	public void setModifiedOn(Date modifiedOn) {
+		this.modifiedOn = modifiedOn;
+	}
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+	
+
 }

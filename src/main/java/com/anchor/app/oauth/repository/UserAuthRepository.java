@@ -9,7 +9,7 @@ import com.anchor.app.oauth.model.UserAuth;
 
 
 @Repository
-public interface UserAuthRepository extends MongoRepository<UserAuth, Long> {
+public interface UserAuthRepository extends MongoRepository<UserAuth, String> {
 	
 	 @Query(value = "{ 'identifier' : ?0 }")
 	 public UserAuth findByUserName(String userName);

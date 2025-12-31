@@ -1,17 +1,22 @@
 package com.anchor.app.minio;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,14 +26,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import com.anchor.app.exceptions.MediaServiceException;
-import com.anchor.app.exceptions.MinioServiceException;
+import com.anchor.app.exception.MinioServiceException;
+import com.anchor.app.hls.model.Hls_PlayList;
+import com.anchor.app.hls.model.Hls_Segment;
+import com.anchor.app.media.model.MediaImage;
 import com.anchor.app.model.Image;
+import com.anchor.app.model.hls.Hls_MediaRepresentation;
 import com.anchor.app.util.EnvProp;
-import com.anchor.app.vo.MediaImage;
 
 import io.minio.BucketExistsArgs;
 import io.minio.GetObjectArgs;
+import io.minio.GetObjectResponse;
 import io.minio.ListObjectsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
@@ -36,6 +44,12 @@ import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectsArgs;
 import io.minio.Result;
 import io.minio.UploadObjectArgs;
+import io.minio.errors.ErrorResponseException;
+import io.minio.errors.InsufficientDataException;
+import io.minio.errors.InternalException;
+import io.minio.errors.InvalidResponseException;
+import io.minio.errors.ServerException;
+import io.minio.errors.XmlParserException;
 import io.minio.messages.DeleteError;
 import io.minio.messages.DeleteObject;
 import io.minio.messages.Item;
@@ -130,6 +144,164 @@ public class MinioService {
 
 
 	
+	public void saveHlsStreamData(Hls_MediaRepresentation hlm) throws MinioServiceException {
+		
+		try {
+			String bucketName = env.getMediaBucketName();
+			hlm.setBucketName(bucketName);
+				
+			// Savr HLS PlayList and Segment to Database
+			saveHlsStreamToDb(hlm, bucketName);
+		
+		}
+		catch(Exception e)
+		{
+			throw new MinioServiceException(e.getMessage(), e);
+		}
+
+		
+	}
+	
+	
+	private void saveHlsStreamToDb(Hls_MediaRepresentation hlm, String bucketName) throws MinioServiceException
+	{
+		saveHlsPlayListToDb(hlm,bucketName);
+		saveHlsSegmentToDb(hlm,bucketName);
+		
+		System.out.println("HLS Stream Persisted to DB");
+	}
+	
+	private void saveHlsPlayListToDb(Hls_MediaRepresentation hlm,String bucketName) throws MinioServiceException
+	{
+		try {
+			
+			if(!hlm.getHlsPlayList().isEmpty())
+			{
+				for (Hls_PlayList playList : hlm.getHlsPlayList())
+				{
+					String objectName = playList.getMediaId()+"/"+playList.getPlayListName();
+					
+					putObject(playList.getPlayListPath(), objectName, bucketName);
+					hlm.setPersistedPlayListCount(hlm.getPersistedPlayListCount()+1);
+						
+				//	logger.info("Storing PlayList objName"+objectName+" , from Path:"+playList.getPlayListPath()+", To Bucket:"+bucketName+" ... Done");
+		
+				}
+				
+				/*
+				
+				hlm.getHlsPlayList().stream().forEach(playList -> {
+						try {
+					
+						String objectName = playList.getMediaId()+"/"+playList.getPlayListName();
+						
+						putObject(playList.getPlayListPath(), objectName, bucketName);
+						hlm.setPersistedPlayListCount(hlm.getPersistedPlayListCount()+1);
+							
+						logger.info("Storing PlayList objName"+objectName+" , from Path:"+playList.getPlayListPath()+", To Bucket:"+bucketName+" ... Done");
+						
+						
+						} catch (Exception e) {
+							// Swallowing Parallel Stream exception
+							logger.error("Import Error for :"+playList.getPlayListName(), e);
+						}
+					});
+					
+					*/
+			}	
+		
+			
+			if(hlm.getPersistedPlayListCount() == hlm.getHlsPlayList().size())
+			{
+				hlm.setIssegmentsPersisted(true);
+			}
+		
+			if(!hlm.isIssegmentsPersisted())
+			{
+				logger.error(hlm.getPersistedPlayListCount()+ " out of "+hlm.getHlsPlayList().size()+" only Persisted");
+				
+				throw new MinioServiceException(hlm.getPersistedPlayListCount()+ " out of "+hlm.getHlsPlayList().size()+" only Persisted");
+			}
+		}
+		catch(Exception e)
+		{
+			logger.error("HLS PlayList Save to Db Error for Media ID:"+hlm.getMediaId(), e);
+		}
+		
+			
+			
+	}
+	
+	private void saveHlsSegmentToDb(Hls_MediaRepresentation hlm,String bucketName) throws MinioServiceException
+	{
+		try {
+			if(!hlm.getHlsSegmentList().isEmpty())
+			{
+				
+				for (Hls_Segment segment : hlm.getHlsSegmentList() )
+				{
+					String objectName = segment.getMediaId()+"/"+segment.getSegmentLocation()+"/"+segment.getSegmentName();
+					
+					putObject(segment.getSegPath(), objectName, bucketName);
+					
+					 hlm.setPersistedSegmentCount(hlm.getPersistedSegmentCount()+1);	
+						
+					
+					//logger.info("Storing PlayList objName"+objectName+" , from Path:"+segment.getSegPath()+", To Bucket:"+bucketName+" ... Done");
+				
+				
+				}
+				
+				/*
+				hlm.getHlsSegmentList().stream().forEach(segment -> {
+					try {
+					
+						String objectName = segment.getMediaId()+"/"+segment.getSegmentLocation()+"/"+segment.getSegmentName();
+						
+						putObject(segment.getSegPath(), objectName, bucketName);
+						
+						 hlm.setPersistedSegmentCount(hlm.getPersistedSegmentCount()+1);	
+							
+						
+						logger.info("Storing PlayList objName"+objectName+" , from Path:"+segment.getSegPath()+", To Bucket:"+bucketName+" ... Done");
+					
+						
+					} catch (Exception e) {
+						logger.error("Save Segment Error for :"+segment.getId(), e);
+						throw new RuntimeException(e.getMessage(), e);
+					}
+				});	
+				
+				*/
+				
+				if(hlm.getPersistedSegmentCount() == hlm.getHlsSegmentList().size())
+				{
+					hlm.setIssegmentsPersisted(true);
+				}
+			
+				if(!hlm.isIssegmentsPersisted())
+				{
+					logger.error(hlm.getPersistedSegmentCount()+ " out of "+hlm.getHlsSegmentList().size()+" only Persisted");
+					throw new MinioServiceException(hlm.getPersistedSegmentCount()+ " out of "+hlm.getHlsSegmentList().size()+" only Persisted");
+				}
+				
+				
+				
+			}	
+		}
+		catch(Exception e)
+		{
+			// Delete Partially Inserted Segment from DB
+		//	deleteHlsSegmentData(hlm.getMediaId());
+			
+			logger.error("HLS Segement Save to DB Error for ID:"+hlm.getMediaId(), e);
+			throw new MinioServiceException(e.getMessage(), e);
+		}
+		
+		
+		
+	}
+	
 	/**
 	 * put Object to Minio Object Store
 	 * @param filePath
@@ -184,21 +356,14 @@ public class MinioService {
 		
 	}
 	
-	private void createBucketIfNotExists(String bucketName) throws MediaServiceException
+	private void createBucketIfNotExists(String bucketName) throws InvalidKeyException, ErrorResponseException, InsufficientDataException, InternalException, InvalidResponseException, NoSuchAlgorithmException, ServerException, XmlParserException, IllegalArgumentException, IOException
 	{
-		try{
-		boolean isExist = minioClient
+		 boolean isExist = minioClient
 		          .bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
 		      if (!isExist) {
 		      
 		    	  minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
-		      }		
-		}
-		catch(Exception e)
-		{
-			throw new MediaServiceException(e.getMessage(), e);
-		}
-		 
+		      }
 		      
 	}
 

@@ -1,6 +1,6 @@
 package com.anchor.app.cache.service;
 
-import com.anchor.app.exceptions.CacheServiceException;
+import com.anchor.app.exception.CacheServiceException;
 import com.anchor.app.oauth.model.UserVerifyToken;
 
 public interface CacheService {

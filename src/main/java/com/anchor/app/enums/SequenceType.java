@@ -34,6 +34,9 @@ public enum SequenceType {
 	EventLog("EventLog"),
 	ActionLog("ActionLog"),
 	UUID("UUID"),
+
+	MsgChannel("MsgChannel"),
+	MsgChannelUser("MsgChannelUser"),
 	;
 	
 	

@@ -10,13 +10,13 @@ import com.anchor.app.oauth.model.User;
 
 
 @Repository
-public interface UserRepository extends MongoRepository<User, Long> {
+public interface UserRepository extends MongoRepository<User, String> {
 	
 	 public List<User> findByUserNameOrEmail(String userName, String email);
 
 	 List<User> findByUserName(String userName);
 	 
-	 List<User> findByUid(Long uid);
+	 List<User> findByUid(String uid);
 	 
 	// @Query(value = "{ 'email' : ?0 }")
 	 public List<User> findByEmail(String email);

@@ -11,8 +11,8 @@ public class UserAuth implements Serializable {
 	
 	 //  id
 	@Id
-    private Long id;
-    private Long uid;
+    private String id;
+    private String uid;
     //1 mobile number 2 email 3 user name 4qq 5 wechat 6 Tencent Weibo 7 Sina Weibo
     private Integer identityType;
     //Mobile phone number, email address, user name or unique identification of third-party application
@@ -22,9 +22,9 @@ public class UserAuth implements Serializable {
     //MD5 salt value encryption
     private String md5;
     
-    private Long createdBy;
+    private String createdBy;
     private Date createdDate;
-    private Long modifiedBy;
+    private String modifiedBy;
     private Date modifiedDate;
     
     //Role ID
@@ -45,23 +45,31 @@ public class UserAuth implements Serializable {
     
     }
     
-	public Long getId() {
+		public String getId() {
 		return id;
 	}
 
-	public void setId(Long id) {
+
+
+	public void setId(String id) {
 		this.id = id;
 	}
 
-	public Long getUid() {
+
+
+	public String getUid() {
 		return uid;
 	}
 
-	public void setUid(Long uid) {
+
+
+	public void setUid(String uid) {
 		this.uid = uid;
 	}
 
-	public Integer getIdentityType() {
+
+
+		public Integer getIdentityType() {
 		return identityType;
 	}
 
@@ -97,19 +105,21 @@ public class UserAuth implements Serializable {
 		return roles;
 	}
 	
-	public Long getCreatedBy() {
+	
+
+	public String getCreatedBy() {
 		return createdBy;
 	}
 
-	public void setCreatedBy(Long createdBy) {
+	public void setCreatedBy(String createdBy) {
 		this.createdBy = createdBy;
 	}
 
-	public Long getModifiedBy() {
+	public String getModifiedBy() {
 		return modifiedBy;
 	}
 
-	public void setModifiedBy(Long modifiedBy) {
+	public void setModifiedBy(String modifiedBy) {
 		this.modifiedBy = modifiedBy;
 	}
 

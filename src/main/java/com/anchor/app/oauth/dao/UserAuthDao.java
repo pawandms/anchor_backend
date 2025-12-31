@@ -4,7 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
-import com.anchor.app.exceptions.UserAuthDaoException;
+
+import com.anchor.app.exception.UserAuthDaoException;
 import com.anchor.app.oauth.model.UserAuth;
 import com.anchor.app.oauth.repository.UserAuthRepository;
 

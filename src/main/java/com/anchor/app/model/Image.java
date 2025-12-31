@@ -9,7 +9,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import com.anchor.app.enums.EntityType;
 import com.anchor.app.enums.ImageType;
 
-
 @Document(collection= "image")
 public class Image implements Serializable{
 

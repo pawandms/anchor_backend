@@ -10,11 +10,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import com.anchor.app.exceptions.UserException;
+import com.anchor.app.exception.UserException;
 import com.anchor.app.minio.MinioService;
 import com.anchor.app.oauth.service.UserService;
+import com.anchor.app.oauth.vo.UserVo;
 import com.anchor.app.util.EnvProp;
-import com.anchor.app.vo.UserVo;
 
 
 @Controller

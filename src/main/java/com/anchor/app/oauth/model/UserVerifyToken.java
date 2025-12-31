@@ -22,9 +22,9 @@ public class UserVerifyToken implements Serializable {
 	private String lastName;
 	private String emailAddress;
 	private boolean valid;
-    private Long createdBy;
+    private String createdBy;
     private Date createdDate;
-    private Long modifiedBy;
+    private String modifiedBy;
     private Date modifiedDate;
 
 	
@@ -85,16 +85,18 @@ public class UserVerifyToken implements Serializable {
 		this.modifiedDate = modifiedDate;
 	}
 
-	public Long getCreatedBy() {
+	
+	
+	public String getCreatedBy() {
 		return createdBy;
 	}
-	public void setCreatedBy(Long createdBy) {
+	public void setCreatedBy(String createdBy) {
 		this.createdBy = createdBy;
 	}
-	public Long getModifiedBy() {
+	public String getModifiedBy() {
 		return modifiedBy;
 	}
-	public void setModifiedBy(Long modifiedBy) {
+	public void setModifiedBy(String modifiedBy) {
 		this.modifiedBy = modifiedBy;
 	}
 	@Override

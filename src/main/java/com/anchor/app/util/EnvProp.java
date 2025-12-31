@@ -6,13 +6,13 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.regex.Pattern;
+
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
-
-import com.anchor.app.exceptions.AppConfigurationException;
 
 import jakarta.annotation.PostConstruct;
 
@@ -117,20 +117,14 @@ public class EnvProp {
 	public void init() throws IOException
 	{
 		try {
-
-			populateMongoDbConfig();
-
-			// Populate Minio Config
-			populateMinioConfig();
-
-			/* 
 			populateAuthConfig();
 			
 			this.playlistUrl = env.getProperty("media.plUrl");
 			this.segmentUrl =  env.getProperty("media.segmentUrl");
-			this.mongodb = env.getProperty("mongodb.database");
-			this.mongourl = env.getProperty("mongodb.url"); 
 			this.ImageUrl =  env.getProperty("media.ImageURL");
+			
+			this.mongodb = env.getProperty("spring.mongodb.database");
+			this.mongourl = env.getProperty("spring.mongodb.uri"); 
 			populatePersonImportBatchSize();
 			
 			// MovieDB Config Initilization
@@ -140,33 +134,32 @@ public class EnvProp {
 			this.movieDB_apiKey = env.getProperty("tmdbImport.apikey");
 		
 			// YouTube Config
-			populateYouTubeConfig();
+			//populateYouTubeConfig();
 
 			// Populate ImportMediaConfig
-			populateImportMediaConfig();
+			//populateImportMediaConfig();
 			
 			
 			//HLS Config
-			populateHlsConfig();
+		//	populateHlsConfig();
 			
 			// Populate Minio Config
 			populateMinioConfig();
 			
 			// Populate Messaging Queue Config
-			populateMsgQueueConfig();	
+			//populateMsgQueueConfig();	
 			
 			
 			// Populate FroentEnd App Configuration
-			populateFrontEndConfig();
+			//populateFrontEndConfig();
 			
 			// Populate Default Auth Config
-			populateDefaultAuthConfig();
+			//populateDefaultAuthConfig();
 			
 			// Populate Nats Server Config
 			populateNatsConfig();
 			
 			populateFireBaseConfig();
-			*/
 		}
 		catch(Exception e)
 		{
@@ -179,33 +172,6 @@ public class EnvProp {
 	public EnvProp() {
 		super();
 		logger.info("Initilizing Envprop....");
-	}
-
-	private void populateMongoDbConfig() throws AppConfigurationException
-	{
-		try{
-			String mongodbName =  env.getProperty("spring.mongodb.database");
-			if( null == mongodbName)
-			{
-			throw new AppConfigurationException("Unable to Fetch MongoDb DB Name");
-			}
-			this.mongodb = mongodbName;
-
-			String mongoUrl  = env.getProperty("spring.mongodb.uri");  
-			if( null == mongoUrl)
-			{
-			throw new AppConfigurationException("Unable to Fetch MongoDb DB Url");
-			}
-			this.mongourl = mongoUrl;
-		
-		}
-		catch(Exception e)
-		{
-			logger.error(e.getMessage(), e);
-			throw new AppConfigurationException(e.getMessage(), e);
-			
-		}
-
 	}
 
 	private void populateAuthConfig()
