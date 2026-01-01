@@ -12,6 +12,13 @@ spring:
   main:
     allow-circular-references: true
   
+  mvc:
+   apiversion:
+    supported: v1,v2
+    default: v1
+    use:
+      path-segment: 1
+ 
   mongodb:
     uri: mongodb://admin:admin123@localhost:27018/msgdb?authSource=admin
     database: msgdb

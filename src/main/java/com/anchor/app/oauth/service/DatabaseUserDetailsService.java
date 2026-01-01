@@ -14,9 +14,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Service;
 
-import com.anchor.app.exceptions.AuthServiceException;
 import com.anchor.app.oauth.model.UserAuth;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 

@@ -54,6 +54,7 @@ import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 
 import com.anchor.app.oauth.service.DatabaseRegisteredClientRepository;
 import com.anchor.app.oauth.service.DatabaseUserDetailsService;
+import com.anchor.app.users.repository.UserAuthRepository;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
@@ -72,6 +73,10 @@ public class SecurityConfig {
 
 	@Autowired
 	private DatabaseRegisteredClientRepository databaseRegisteredClientRepository;
+
+	@Autowired
+	private UserAuthRepository userAuthRepository;
+
 
 	//@Autowired
 	//private MongoOAuth2AuthorizationService mongoOAuth2AuthorizationService;
@@ -108,6 +113,7 @@ public class SecurityConfig {
 					.authenticationProvider(new CustomRefreshTokenAuthenticationProvider(
 							oAuth2AuthorizationService(),
 							tokenGenerator()))
+					.accessTokenResponseHandler(customTokenResponseHandler())		
 					.errorResponseHandler(authenticationFailureHandler()));
 		
 		http
@@ -139,16 +145,11 @@ public class SecurityConfig {
 	@Order(2)
 	SecurityFilterChain mainSecurityFilterChain(HttpSecurity http) throws Exception {
 		http
-			.securityMatcher("/rest/**", "/auth/**", "/api/**", "/", "/views/**", 
-							"/updatesigneddoc", "/receivecall", "/fitbittoken", "/join", 
-							"/joininapp", "/chime", "/meeting", "/verify", "/mobilesurvey*", 
-							"/mobilesurveyjsnote*", "/mobilesurveyjscareplan*", "/mobileclinicalnotesuccess",
-							"/mobilecareplansuccess", "/mobilesurveysuccess*", "/switchuser", "/restoreswitchuser" )
+			.securityMatcher("/api/**")
 			.authorizeHttpRequests((authorize) -> authorize
 				
-				// Basic paths
-				.requestMatchers("/", "/views/**").permitAll()
-				
+				// Public authentication endpoints
+				.requestMatchers("/api/*/public/**").permitAll()
 				
 				// All other requests require authentication
 				.anyRequest().authenticated()
@@ -203,7 +204,7 @@ public class SecurityConfig {
 		RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
 		RSAKey rsaKey = new RSAKey.Builder(publicKey)
 				.privateKey(privateKey)
-				.keyID("hifinite-key-1") // Fixed key ID instead of random UUID
+				.keyID("anchor-key-1") // Fixed key ID instead of random UUID
 				.build();
 		JWKSet jwkSet = new JWKSet(rsaKey);
 		return new ImmutableJWKSet<>(jwkSet);
@@ -218,7 +219,7 @@ public class SecurityConfig {
 			// IMPORTANT: Only use this in development, not in production!
 			// For production, load keys from a keystore or external secure storage
 			java.security.SecureRandom secureRandom = java.security.SecureRandom.getInstance("SHA1PRNG");
-			secureRandom.setSeed("hifinite-dev-seed-2025".getBytes()); // Fixed seed for dev
+			secureRandom.setSeed("anchor-seed-2025".getBytes()); // Fixed seed for dev
 			keyPairGenerator.initialize(2048, secureRandom);
 			keyPair = keyPairGenerator.generateKeyPair();
 		}
@@ -356,6 +357,13 @@ public class SecurityConfig {
     public CustomAuthenticationEntryPoint customAuthenticationEntryPoint() {
         return new CustomAuthenticationEntryPoint();
     }
+
+	
+	@Bean
+	public CustomTokenResponseHandler customTokenResponseHandler() {
+		return new CustomTokenResponseHandler(userAuthRepository);
+	}
+
 
     @Bean
     public HttpFirewall getHttpFirewall() 
