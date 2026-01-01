@@ -19,7 +19,8 @@ erDiagram
     USER ||--o{ USER_MESSAGE_RELATION : "has"
     USER ||--o{ STATUS_UPDATES : "posts"
     USER ||--o{ STATUS_VIEWS : "views"
-    USER ||--o{ CONTACTS : "has"
+    USER ||--o{ USER_CONTACTS : "has"
+    USER ||--o{ CONTACT_REQUESTS : "sends/receives"
     USER ||--o{ USER_PRESENCE : "has"
     USER ||--o{ MEDIA : "uploads"
     MESSAGES ||--o{ MEDIA : "contains"
@@ -242,26 +243,31 @@ erDiagram
         Date modDate "Last modification timestamp"
     }
     
-    CONTACTS {
+    USER_CONTACTS {
         String Id PK
         String userId FK "User who owns this contact"
-        String contactUserId FK "The contact/friend user ID"
-        RelationshipType relationshipType "Enum: FRIEND, SUGGESTION, REJECTED, BLOCKED_BY_ME, BLOCKED_BY_THEM"
-        ContactStatus status "Enum: SUGGESTED, PENDING_SENT, PENDING_RECEIVED, ACCEPTED, REJECTED"
-        String requestSentBy FK "User ID who sent friend request"
-        ContactSource source "Enum: MUTUAL_FRIEND, CHANNEL_MEMBER, PHONE_CONTACT, MANUAL"
-        String sourceChannelId FK "Channel where they met (if applicable)"
-        Array mutualFriends "User IDs of mutual friends"
-        Integer mutualFriendCount "Cached count"
-        Array sharedChannels "Channel IDs they both are members of"
-        Integer interactionScore "Frequency of interaction (for ranking)"
-        Date lastInteractionAt "Last message/call with this contact"
-        Boolean isFavorite "Marked as favorite contact"
-        String customName "Custom name/nickname for this contact"
-        String oneToOneChannelId FK "Reference to default 1-1 channel (created on accept)"
-        Date requestSentAt "When friend request was sent"
-        Date acceptedAt "When request was accepted"
-        Date rejectedAt "When request was rejected"
+        String contactId FK "The contact user ID"
+        ContactType contactType "Enum: FRIEND, BLOCKED"
+        String oneToOneChannelId FK "Reference to 1-1 channel"
+        Boolean isFavorite "Marked as favorite"
+        String customName "Custom name/nickname"
+        Integer interactionScore "Interaction frequency score"
+        Date lastInteractionAt "Last interaction timestamp"
+        String crUser FK "User ID who created"
+        Date crDate "Creation timestamp"
+        String modUser FK "User ID who last modified"
+        Date modDate "Last modification timestamp"
+    }
+    
+    CONTACT_REQUESTS {
+        String Id PK
+        String fromUserId FK "User who sent request"
+        String toUserId FK "User receiving request"
+        RequestType requestType "Enum: FRIEND_REQUEST"
+        ResponseType responseType "Enum: PENDING, ACCEPTED, REJECTED"
+        Date requestedAt "When request was sent"
+        Date respondedAt "When request was responded to"
+        String message "Optional message with request"
         String crUser FK "User ID who created"
         Date crDate "Creation timestamp"
         String modUser FK "User ID who last modified"
@@ -537,16 +543,19 @@ db.status_views.createIndex({ "statusId": 1, "viewedAt": -1 })
 db.status_views.createIndex({ "statusId": 1, "viewerId": 1 }, { unique: true })
 db.status_views.createIndex({ "viewerId": 1 })
 
-// contacts collection
-db.contacts.createIndex({ "userId": 1, "contactUserId": 1 }, { unique: true })
-db.contacts.createIndex({ "userId": 1, "relationshipType": 1, "status": 1 })
-db.contacts.createIndex({ "userId": 1, "status": 1 })
-db.contacts.createIndex({ "userId": 1, "interactionScore": -1 })
-db.contacts.createIndex({ "userId": 1, "lastInteractionAt": -1 })
-db.contacts.createIndex({ "userId": 1, "isFavorite": 1 })
-db.contacts.createIndex({ "contactUserId": 1, "status": 1 })
-db.contacts.createIndex({ "sourceChannelId": 1 })
-db.contacts.createIndex({ "oneToOneChannelId": 1 })
+// user_contacts collection
+db.user_contacts.createIndex({ "userId": 1, "contactId": 1 }, { unique: true })
+db.user_contacts.createIndex({ "userId": 1, "contactType": 1 })
+db.user_contacts.createIndex({ "userId": 1, "isFavorite": 1 })
+db.user_contacts.createIndex({ "userId": 1, "lastInteractionAt": -1 })
+db.user_contacts.createIndex({ "contactId": 1 })
+db.user_contacts.createIndex({ "oneToOneChannelId": 1 })
+
+// contact_requests collection
+db.contact_requests.createIndex({ "fromUserId": 1, "toUserId": 1, "requestType": 1 })
+db.contact_requests.createIndex({ "toUserId": 1, "responseType": 1 })
+db.contact_requests.createIndex({ "fromUserId": 1, "responseType": 1 })
+db.contact_requests.createIndex({ "responseType": 1, "requestedAt": -1 })
 
 // media collection
 db.media.createIndex({ "entityType": 1, "entityId": 1 })
@@ -1875,337 +1884,59 @@ db.channels.find({
 
 ---
 
-## Contact & Friend Management Scenarios
+## Contact & Friend Management (Simplified Model)
 
-### ContactRelation Lifecycle & Population
+### Overview
 
-The `ContactRelation` collection is populated automatically by the system in the following scenarios:
+The contact system uses two collections:
+- **user_contacts**: Final relationship state (FRIEND or BLOCKED)
+- **contact_requests**: Pending friend requests management
 
-#### 1. **System-Generated Suggestions** (Automatic)
-Records are created with `relationshipType: "SUGGESTION"` and `status: "SUGGESTED"` when:
-
-**A. User Joins a Channel**
-```javascript
-// When Alice joins "Tech Enthusiasts" group
-// System finds other members and creates suggestions
-
-const channelMembers = db.channel_members.find({ 
-  channelId: "tech_group_id",
-  userId: { $ne: "alice_id" }
-})
-
-// For each member, create suggestion if not already connected
-channelMembers.forEach(member => {
-  db.contacts.updateOne(
-    { userId: "alice_id", contactUserId: member.userId },
-    {
-      $setOnInsert: {
-        _id: generateId(),
-        userId: "alice_id",
-        contactUserId: member.userId,
-        relationshipType: "SUGGESTION",
-        status: "SUGGESTED",
-        source: "CHANNEL_MEMBER",
-        sourceChannelId: "tech_group_id",
-        sharedChannels: ["tech_group_id"],
-        mutualFriends: [],
-        mutualFriendCount: 0,
-        interactionScore: 0,
-        crUser: "system",
-        crDate: new Date()
-      },
-      $addToSet: { sharedChannels: "tech_group_id" }
-    },
-    { upsert: true }
-  )
-})
-```
-
-**B. Mutual Friends Detected** (Daily/Periodic Job)
-```javascript
-// Background job runs to find friend-of-friend suggestions
-// Creates records with source: "MUTUAL_FRIEND"
-
-// For each user, find mutual friends
-db.contacts.aggregate([
-  { $match: { userId: "alice_id", relationshipType: "FRIEND" } },
-  { $lookup: { 
-      from: "contacts", 
-      let: { friendId: "$contactUserId" },
-      pipeline: [
-        { $match: { 
-            $expr: { $eq: ["$userId", "$$friendId"] },
-            relationshipType: "FRIEND"
-          }
-        }
-      ],
-      as: "fof" 
-    }
-  },
-  // Create suggestion records for friends-of-friends
-])
-```
-
-**C. Phone Contacts Sync**
-```javascript
-// When user syncs phone contacts
-// System matches phone numbers with registered users
-
-const phoneContacts = ["+1234567890", "+0987654321", ...]
-
-phoneContacts.forEach(phone => {
-  const user = db.users.findOne({ phoneNumber: phone })
-  if (user) {
-    db.contacts.updateOne(
-      { userId: "alice_id", contactUserId: user._id },
-      {
-        $setOnInsert: {
-          relationshipType: "SUGGESTION",
-          status: "SUGGESTED",
-          source: "PHONE_CONTACT",
-          crUser: "alice_id",
-          crDate: new Date()
-        }
-      },
-      { upsert: true }
-    )
-  }
-})
-```
-
-#### 2. **User-Initiated Actions** (Manual)
-
-**A. Send Friend Request**
-```javascript
-// Alice clicks "Add Friend" on Bob's profile
-// Creates TWO records (bidirectional)
-
-// Record 1: Alice's perspective
-db.contacts.insertOne({
-  userId: "alice_id",
-  contactUserId: "bob_id",
-  relationshipType: "SUGGESTION",
-  status: "PENDING_SENT",
-  requestSentBy: "alice_id",
-  source: "MANUAL",
-  requestSentAt: new Date()
-})
-
-// Record 2: Bob's perspective
-db.contacts.insertOne({
-  userId: "bob_id",
-  contactUserId: "alice_id",
-  relationshipType: "SUGGESTION",
-  status: "PENDING_RECEIVED",
-  requestSentBy: "alice_id",
-  source: "MANUAL",
-  requestSentAt: new Date()
-})
-```
-
-**B. Block User**
-```javascript
-// Alice blocks Bob (even without existing friendship)
-// Creates/updates record immediately
-
-db.contacts.updateOne(
-  { userId: "alice_id", contactUserId: "bob_id" },
-  {
-    $set: {
-      relationshipType: "BLOCKED_BY_ME",
-      status: "REJECTED",
-      modUser: "alice_id",
-      modDate: new Date()
-    },
-    $setOnInsert: {
-      _id: generateId(),
-      userId: "alice_id",
-      contactUserId: "bob_id",
-      source: "MANUAL",
-      crUser: "alice_id",
-      crDate: new Date()
-    }
-  },
-  { upsert: true }
-)
-```
-
-#### 3. **Status Transitions**
+### Data Flow
 
 ```
-SUGGESTED (system) 
-    ↓ (user sends request)
-PENDING_SENT ←→ PENDING_RECEIVED
-    ↓ (accepted)
-ACCEPTED (relationshipType changes to FRIEND)
-    ↓ (rejected)
-REJECTED
+User A sends friend request
+    ↓
+Create ContactRequest (responseType: PENDING)
+    ↓
+User B accepts
+    ↓
+1. Create UserContact for A (contactType: FRIEND)
+2. Create UserContact for B (contactType: FRIEND)
+3. Create 1-1 Channel for chat
+4. Update ContactRequest (responseType: ACCEPTED)
 
 OR
 
-SUGGESTED/ACCEPTED
-    ↓ (user blocks)
-BLOCKED_BY_ME ←→ BLOCKED_BY_THEM
-```
-
-#### 4. **Record Creation Summary**
-
-| Trigger Event | Source | RelationshipType | Status | Bidirectional |
-|--------------|--------|------------------|--------|---------------|
-| User joins channel | CHANNEL_MEMBER | SUGGESTION | SUGGESTED | No (one-way) |
-| Mutual friend found | MUTUAL_FRIEND | SUGGESTION | SUGGESTED | No (one-way) |
-| Phone contact synced | PHONE_CONTACT | SUGGESTION | SUGGESTED | No (one-way) |
-| User sends friend request | MANUAL | SUGGESTION | PENDING_SENT/PENDING_RECEIVED | Yes (two records) |
-| Friend request accepted | - | FRIEND | ACCEPTED | Yes (both updated) |
-| User blocks someone | MANUAL | BLOCKED_BY_ME | REJECTED | Yes (both updated) |
-
-#### 5. **Cleanup & Maintenance**
-
-```javascript
-// Delete old rejected suggestions (monthly cleanup)
-db.contacts.deleteMany({
-  relationshipType: "SUGGESTION",
-  status: "REJECTED",
-  modDate: { $lt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) } // 90 days old
-})
-
-// Archive inactive suggestions (never interacted)
-db.contacts.deleteMany({
-  relationshipType: "SUGGESTION",
-  status: "SUGGESTED",
-  interactionScore: 0,
-  crDate: { $lt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000) } // 180 days old
-})
+User blocks directly
+    ↓
+Create UserContact (contactType: BLOCKED)
+(No ContactRequest needed)
 ```
 
 ---
 
-### Scenario 1: Friend Suggestion Based on Mutual Friends
-
-```javascript
-// Alice and Bob are both friends with Charlie
-// System suggests they connect
-
-// Find potential friend suggestions for Alice
-db.contacts.aggregate([
-  // Get Alice's friends
-  { $match: { 
-      userId: "alice_id", 
-      relationshipType: "FRIEND",
-      status: "ACCEPTED"
-    }
-  },
-  // Get friends of Alice's friends
-  { $lookup: {
-      from: "contacts",
-      let: { friendId: "$contactUserId" },
-      pipeline: [
-        { $match: { 
-            $expr: { $eq: ["$userId", "$$friendId"] },
-            relationshipType: "FRIEND",
-            status: "ACCEPTED"
-          }
-        }
-      ],
-      as: "friendsOfFriends"
-    }
-  },
-  { $unwind: "$friendsOfFriends" },
-  // Exclude already connected users
-  { $lookup: {
-      from: "contacts",
-      let: { suggestedId: "$friendsOfFriends.contactUserId" },
-      pipeline: [
-        { $match: {
-            $expr: { 
-              $and: [
-                { $eq: ["$userId", "alice_id"] },
-                { $eq: ["$contactUserId", "$$suggestedId"] }
-              ]
-            }
-          }
-        }
-      ],
-      as: "existing"
-    }
-  },
-  { $match: { existing: { $size: 0 } } },
-  // Group by suggested user and count mutual friends
-  { $group: {
-      _id: "$friendsOfFriends.contactUserId",
-      mutualFriends: { $addToSet: "$contactUserId" },
-      mutualFriendCount: { $sum: 1 }
-    }
-  },
-  { $sort: { mutualFriendCount: -1 } },
-  { $limit: 10 }
-])
-
-// Create suggestion record
-db.contacts.insertOne({
-  _id: "contact_suggestion_001",
-  userId: "alice_id",
-  contactUserId: "bob_id",
-  relationshipType: "SUGGESTION",
-  status: "SUGGESTED",
-  source: "MUTUAL_FRIEND",
-  mutualFriends: ["charlie_id", "david_id"],
-  mutualFriendCount: 2,
-  sharedChannels: [],
-  interactionScore: 0,
-  crUser: "system",
-  crDate: new Date(),
-  modUser: "system",
-  modDate: new Date()
-})
-```
-
-### Scenario 2: Send Friend Request
+### Scenario 1: Send Friend Request
 
 ```javascript
 // Alice sends friend request to Bob
 
-// Step 1: Create contact record for Alice
-db.contacts.insertOne({
-  _id: "contact_req_001",
-  userId: "alice_id",
-  contactUserId: "bob_id",
-  relationshipType: "SUGGESTION",
-  status: "PENDING_SENT",
-  requestSentBy: "alice_id",
-  source: "MANUAL",
-  requestSentAt: new Date(),
-  mutualFriends: ["charlie_id"],
-  mutualFriendCount: 1,
-  sharedChannels: [],
-  interactionScore: 0,
+// Step 1: Create contact request
+db.contact_requests.insertOne({
+  _id: "req_001",
+  fromUserId: "alice_id",
+  toUserId: "bob_id",
+  requestType: "FRIEND_REQUEST",
+  responseType: "PENDING",
+  requestedAt: new Date(),
+  message: "Hi Bob! Let's connect",
   crUser: "alice_id",
   crDate: new Date(),
   modUser: "alice_id",
   modDate: new Date()
 })
 
-// Step 2: Create reciprocal record for Bob
-db.contacts.insertOne({
-  _id: "contact_req_002",
-  userId: "bob_id",
-  contactUserId: "alice_id",
-  relationshipType: "SUGGESTION",
-  status: "PENDING_RECEIVED",
-  requestSentBy: "alice_id",
-  source: "MANUAL",
-  requestSentAt: new Date(),
-  mutualFriends: ["charlie_id"],
-  mutualFriendCount: 1,
-  sharedChannels: [],
-  interactionScore: 0,
-  crUser: "alice_id",
-  crDate: new Date(),
-  modUser: "alice_id",
-  modDate: new Date()
-})
-
-// Step 3: Send notification to Bob
+// Step 2: Send notification to Bob
 db.notifications.insertOne({
   userId: "bob_id",
   type: "FRIEND_REQUEST",
@@ -2216,89 +1947,93 @@ db.notifications.insertOne({
 })
 ```
 
-### Scenario 3: Accept Friend Request
+### Scenario 2: Accept Friend Request
 
 ```javascript
 // Bob accepts Alice's friend request
 
+const now = new Date()
+
 // Step 1: Create one-to-one channel
-const newChannel = {
+const channel = db.channels.insertOne({
   _id: "channel_alice_bob",
   type: "Messaging",
   subType: "ONE_TO_ONE",
   visibility: "PRIVATE",
   isActive: true,
-  disappearingMessages: false,
   totalMembers: 2,
   crUser: "bob_id",
-  crDate: new Date(),
-  modUser: "bob_id",
-  modDate: new Date()
-}
-db.channels.insertOne(newChannel)
+  crDate: now
+})
 
-// Step 2: Add both users as channel members
+// Step 2: Add channel members
 db.channel_members.insertMany([
   {
-    _id: "member_alice_in_channel",
     channelId: "channel_alice_bob",
     userId: "alice_id",
     role: "MEMBER",
-    validFrom: new Date(),
-    validTo: null,
+    validFrom: now,
     unreadCount: 0,
-    isPinned: false,
-    isHidden: false,
     crUser: "bob_id",
-    crDate: new Date()
+    crDate: now
   },
   {
-    _id: "member_bob_in_channel",
     channelId: "channel_alice_bob",
     userId: "bob_id",
     role: "MEMBER",
-    validFrom: new Date(),
-    validTo: null,
+    validFrom: now,
     unreadCount: 0,
-    isPinned: false,
-    isHidden: false,
     crUser: "bob_id",
-    crDate: new Date()
+    crDate: now
   }
 ])
 
-// Step 3: Update both contact records
-const now = new Date()
+// Step 3: Create UserContact for Alice
+db.user_contacts.insertOne({
+  _id: "contact_alice_001",
+  userId: "alice_id",
+  contactId: "bob_id",
+  contactType: "FRIEND",
+  oneToOneChannelId: "channel_alice_bob",
+  isFavorite: false,
+  interactionScore: 0,
+  lastInteractionAt: now,
+  crUser: "bob_id",
+  crDate: now,
+  modUser: "bob_id",
+  modDate: now
+})
 
-db.contacts.updateOne(
-  { userId: "alice_id", contactUserId: "bob_id" },
-  { 
+// Step 4: Create UserContact for Bob
+db.user_contacts.insertOne({
+  _id: "contact_bob_001",
+  userId: "bob_id",
+  contactId: "alice_id",
+  contactType: "FRIEND",
+  oneToOneChannelId: "channel_alice_bob",
+  isFavorite: false,
+  interactionScore: 0,
+  lastInteractionAt: now,
+  crUser: "bob_id",
+  crDate: now,
+  modUser: "bob_id",
+  modDate: now
+})
+
+// Step 5: Update contact request
+db.contact_requests.updateOne(
+  { _id: "req_001" },
+  {
     $set: {
-      relationshipType: "FRIEND",
-      status: "ACCEPTED",
-      acceptedAt: now,
-      oneToOneChannelId: "channel_alice_bob",
+      responseType: "ACCEPTED",
+      respondedAt: now,
       modUser: "bob_id",
       modDate: now
     }
   }
 )
 
-db.contacts.updateOne(
-  { userId: "bob_id", contactUserId: "alice_id" },
-  { 
-    $set: {
-      relationshipType: "FRIEND",
-      status: "ACCEPTED",
-      acceptedAt: now,
-      oneToOneChannelId: "channel_alice_bob",
-      modUser: "bob_id",
-      modDate: now
-    }
-  }
-)
-
-// Step 4: Send notification to Alice
+// Step 6: Notify Alice
 db.notifications.insertOne({
   userId: "alice_id",
   type: "FRIEND_REQUEST_ACCEPTED",
@@ -2309,236 +2044,260 @@ db.notifications.insertOne({
 })
 ```
 
-### Scenario 4: Block User
+### Scenario 3: Reject Friend Request
 
 ```javascript
-// Alice blocks Bob (can be done with or without existing friendship)
+// Bob rejects Alice's friend request
 
 const now = new Date()
 
-// Update Alice's contact record
-db.contacts.updateOne(
-  { userId: "alice_id", contactUserId: "bob_id" },
-  { 
+db.contact_requests.updateOne(
+  { fromUserId: "alice_id", toUserId: "bob_id", responseType: "PENDING" },
+  {
     $set: {
-      relationshipType: "BLOCKED_BY_ME",
-      status: "REJECTED",
-      modUser: "alice_id",
+      responseType: "REJECTED",
+      respondedAt: now,
+      modUser: "bob_id",
       modDate: now
     }
-  },
-  { upsert: true }
+  }
 )
 
-// Update Bob's contact record to show he's blocked
-db.contacts.updateOne(
-  { userId: "bob_id", contactUserId: "alice_id" },
-  { 
-    $set: {
-      relationshipType: "BLOCKED_BY_THEM",
-      status: "REJECTED",
-      modUser: "alice_id",
-      modDate: now
-    }
-  },
-  { upsert: true }
-)
-
-// Hide their shared one-to-one channel for Alice
-if (oneToOneChannelId) {
-  db.channel_members.updateOne(
-    { channelId: oneToOneChannelId, userId: "alice_id" },
-    { 
-      $set: { 
-        isHidden: true,
-        modUser: "alice_id",
-        modDate: now
-      }
-    }
-  )
-}
+// Optionally notify Alice
+db.notifications.insertOne({
+  userId: "alice_id",
+  type: "FRIEND_REQUEST_REJECTED",
+  fromUserId: "bob_id",
+  message: "Bob declined your friend request",
+  isRead: false,
+  createdAt: now
+})
 ```
 
-### Scenario 5: Query Friend List
+### Scenario 4: Block User (Direct - No Request)
 
 ```javascript
-// Get all accepted friends for Alice, sorted by recent interaction
+// Alice blocks Bob directly
 
-db.contacts.find({
+const now = new Date()
+
+// Step 1: Check if they are friends, remove friendship
+const existingContact = db.user_contacts.findOne({
   userId: "alice_id",
-  relationshipType: "FRIEND",
-  status: "ACCEPTED"
-}).sort({ 
-  isFavorite: -1,           // Favorites first
-  lastInteractionAt: -1      // Then by recent interaction
+  contactId: "bob_id",
+  contactType: "FRIEND"
 })
 
-// Get favorite contacts only
-db.contacts.find({
+if (existingContact) {
+  // Remove both friendship records
+  db.user_contacts.deleteOne({ userId: "alice_id", contactId: "bob_id" })
+  db.user_contacts.deleteOne({ userId: "bob_id", contactId: "alice_id" })
+  
+  // Hide their 1-1 channel
+  if (existingContact.oneToOneChannelId) {
+    db.channel_members.updateMany(
+      { 
+        channelId: existingContact.oneToOneChannelId,
+        userId: { $in: ["alice_id", "bob_id"] }
+      },
+      { $set: { isHidden: true, modDate: now } }
+    )
+  }
+}
+
+// Step 2: Create blocked contact record for Alice
+db.user_contacts.insertOne({
+  _id: "blocked_001",
   userId: "alice_id",
-  relationshipType: "FRIEND",
-  status: "ACCEPTED",
+  contactId: "bob_id",
+  contactType: "BLOCKED",
+  crUser: "alice_id",
+  crDate: now,
+  modUser: "alice_id",
+  modDate: now
+})
+
+// Step 3: Remove any pending requests between them
+db.contact_requests.deleteMany({
+  $or: [
+    { fromUserId: "alice_id", toUserId: "bob_id" },
+    { fromUserId: "bob_id", toUserId: "alice_id" }
+  ]
+})
+```
+
+### Scenario 5: Unblock User
+
+```javascript
+// Alice unblocks Bob
+
+db.user_contacts.deleteOne({
+  userId: "alice_id",
+  contactId: "bob_id",
+  contactType: "BLOCKED"
+})
+
+// They can now send friend requests again
+```
+
+### Scenario 6: Query Friends
+
+```javascript
+// Get all friends for Alice, sorted by interaction
+db.user_contacts.find({
+  userId: "alice_id",
+  contactType: "FRIEND"
+}).sort({ 
+  isFavorite: -1,
+  lastInteractionAt: -1 
+})
+
+// Get favorite friends only
+db.user_contacts.find({
+  userId: "alice_id",
+  contactType: "FRIEND",
   isFavorite: true
 }).sort({ customName: 1 })
 
-// Get pending friend requests (received)
-db.contacts.find({
+// Get blocked users
+db.user_contacts.find({
   userId: "alice_id",
-  status: "PENDING_RECEIVED"
-}).sort({ requestSentAt: -1 })
-
-// Get sent friend requests (waiting for response)
-db.contacts.find({
-  userId: "alice_id",
-  status: "PENDING_SENT"
-}).sort({ requestSentAt: -1 })
+  contactType: "BLOCKED"
+})
 ```
 
-### Scenario 6: Suggest Friends from Shared Channels
+### Scenario 7: Query Pending Requests
 
 ```javascript
-// Find users Alice shares channels with but isn't friends with yet
+// Get friend requests received by Alice (pending)
+db.contact_requests.find({
+  toUserId: "alice_id",
+  responseType: "PENDING"
+}).sort({ requestedAt: -1 })
 
-db.channel_members.aggregate([
-  // Get Alice's channels
-  { $match: { userId: "alice_id" } },
-  // Get all members in those channels
-  { $lookup: {
-      from: "channel_members",
-      let: { channelId: "$channelId" },
-      pipeline: [
-        { $match: { 
-            $expr: { 
-              $and: [
-                { $eq: ["$channelId", "$$channelId"] },
-                { $ne: ["$userId", "alice_id"] }
-              ]
-            }
-          }
-        }
-      ],
-      as: "otherMembers"
-    }
-  },
-  { $unwind: "$otherMembers" },
-  // Check if already friends
-  { $lookup: {
-      from: "contacts",
-      let: { otherUserId: "$otherMembers.userId" },
-      pipeline: [
-        { $match: {
-            $expr: {
-              $and: [
-                { $eq: ["$userId", "alice_id"] },
-                { $eq: ["$contactUserId", "$$otherUserId"] }
-              ]
-            }
-          }
-        }
-      ],
-      as: "existingContact"
-    }
-  },
-  { $match: { existingContact: { $size: 0 } } },
-  // Group by user and count shared channels
-  { $group: {
-      _id: "$otherMembers.userId",
-      sharedChannels: { $addToSet: "$channelId" },
-      sharedChannelCount: { $sum: 1 }
-    }
-  },
-  { $match: { sharedChannelCount: { $gte: 2 } } }, // At least 2 shared channels
-  { $sort: { sharedChannelCount: -1 } },
-  { $limit: 10 }
-])
+// Get friend requests sent by Alice (pending)
+db.contact_requests.find({
+  fromUserId: "alice_id",
+  responseType: "PENDING"
+}).sort({ requestedAt: -1 })
 
-// Create suggestion records for top candidates
+// Get request history (accepted/rejected)
+db.contact_requests.find({
+  $or: [
+    { fromUserId: "alice_id" },
+    { toUserId: "alice_id" }
+  ],
+  responseType: { $in: ["ACCEPTED", "REJECTED"] }
+}).sort({ respondedAt: -1 })
 ```
 
-### Scenario 7: Update Interaction Score
+### Scenario 8: Update Interaction Score
 
 ```javascript
-// Update interaction score when Alice messages Bob
+// When Alice messages Bob, increment interaction score
 
-db.contacts.updateOne(
-  { userId: "alice_id", contactUserId: "bob_id" },
+db.user_contacts.updateOne(
+  { userId: "alice_id", contactId: "bob_id", contactType: "FRIEND" },
   {
     $inc: { interactionScore: 1 },
     $set: { 
       lastInteractionAt: new Date(),
-      modUser: "alice_id",
       modDate: new Date()
     }
   }
 )
 
 // Also update Bob's record
-db.contacts.updateOne(
-  { userId: "bob_id", contactUserId: "alice_id" },
+db.user_contacts.updateOne(
+  { userId: "bob_id", contactId: "alice_id", contactType: "FRIEND" },
   {
     $inc: { interactionScore: 1 },
     $set: { 
       lastInteractionAt: new Date(),
-      modUser: "alice_id",
       modDate: new Date()
     }
   }
 )
 ```
 
-### Scenario 8: Unblock User
+### Scenario 9: Remove Friend (Unfriend)
 
 ```javascript
-// Alice unblocks Bob
+// Alice removes Bob as friend
 
-const now = new Date()
-
-// Option 1: Remove the contact relationship entirely
-db.contacts.deleteOne({ 
-  userId: "alice_id", 
-  contactUserId: "bob_id" 
+const contact = db.user_contacts.findOne({
+  userId: "alice_id",
+  contactId: "bob_id",
+  contactType: "FRIEND"
 })
 
-db.contacts.deleteOne({ 
-  userId: "bob_id", 
-  contactUserId: "alice_id" 
+// Delete both friendship records
+db.user_contacts.deleteOne({ userId: "alice_id", contactId: "bob_id" })
+db.user_contacts.deleteOne({ userId: "bob_id", contactId: "alice_id" })
+
+// Optionally hide the 1-1 channel
+if (contact && contact.oneToOneChannelId) {
+  db.channel_members.updateMany(
+    { 
+      channelId: contact.oneToOneChannelId,
+      userId: { $in: ["alice_id", "bob_id"] }
+    },
+    { $set: { isHidden: true } }
+  )
+}
+```
+
+### Scenario 10: Check If Users Are Friends
+
+```javascript
+// Check if Alice and Bob are friends
+db.user_contacts.findOne({
+  userId: "alice_id",
+  contactId: "bob_id",
+  contactType: "FRIEND"
 })
 
-// Option 2: Change status to allow re-connection
-db.contacts.updateOne(
-  { userId: "alice_id", contactUserId: "bob_id" },
-  { 
-    $set: {
-      relationshipType: "REJECTED",
-      status: "REJECTED",
-      modUser: "alice_id",
-      modDate: now
-    }
-  }
-)
+// Check if Alice blocked Bob
+db.user_contacts.findOne({
+  userId: "alice_id",
+  contactId: "bob_id",
+  contactType: "BLOCKED"
+})
 
-db.contacts.updateOne(
-  { userId: "bob_id", contactUserId: "alice_id" },
-  { 
-    $set: {
-      relationshipType: "REJECTED",
-      status: "REJECTED",
-      modUser: "alice_id",
-      modDate: now
-    }
-  }
-)
+// Check if there's a pending request
+db.contact_requests.findOne({
+  $or: [
+    { fromUserId: "alice_id", toUserId: "bob_id" },
+    { fromUserId: "bob_id", toUserId: "alice_id" }
+  ],
+  responseType: "PENDING"
+})
 ```
 
-### Benefits of Contact System
+### Benefits of Simplified Model
 
-1. **Unified Blocking** - No separate blocked_users collection needed
-2. **Bidirectional Relationship** - Both users have their own perspective
-3. **Friend Suggestions** - Algorithmic recommendations based on mutual connections
-4. **Interaction Tracking** - Score for ranking and smart suggestions
-5. **Channel Integration** - Automatic 1-1 channel creation on friend acceptance
-6. **Privacy Control** - Block status visible from either side
-7. **Flexible Status** - Support for pending, accepted, rejected states
-8. **Analytics Ready** - Track request acceptance rates, interaction patterns
+1. **Clear Separation** - Final state (user_contacts) separate from request flow (contact_requests)
+2. **Simple Queries** - Easy to get friends or blocked users
+3. **No Status Confusion** - Only 2 contact types: FRIEND or BLOCKED
+4. **Bidirectional Friends** - Two records ensure both users have the relationship
+5. **Request History** - contact_requests keeps audit trail of all requests
+6. **Clean Blocking** - Direct blocking without complex status transitions
+7. **Easy to Extend** - Add new request types (e.g., CHANNEL_INVITE) easily
+8. **Better Performance** - Smaller, focused collections with efficient indexes
 
+### Cleanup Jobs
+
+```javascript
+// Remove old rejected/accepted requests (keep for 30 days)
+db.contact_requests.deleteMany({
+  responseType: { $in: ["ACCEPTED", "REJECTED"] },
+  respondedAt: { $lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
+})
+
+// Remove expired pending requests (older than 90 days)
+db.contact_requests.deleteMany({
+  responseType: "PENDING",
+  requestedAt: { $lt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) }
+})
 ```
+
