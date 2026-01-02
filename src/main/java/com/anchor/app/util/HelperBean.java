@@ -1,7 +1,9 @@
 package com.anchor.app.util;
 
 import java.io.UnsupportedEncodingException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -44,6 +46,21 @@ public class HelperBean {
 	    	return seqStr;
 	    }
 
+		public Long getSequanceNoLong(SequenceType type) throws SequencerException
+	    {
+	    	Long seqNo = null;
+	    	Sequencer seq = Sequencer.getInstance(type.name());
+	    	
+	    	seqNo = seq.next();
+	    	if (seqNo.equals(Long.valueOf(0)))
+			{
+	    		seqNo = seq.next();
+			}
+	    	
+	    	
+	    	return seqNo;
+	    }
+
 		
 		public String encriptPassword(String plainTxt) throws UserException
 		{
@@ -66,6 +83,22 @@ public class HelperBean {
 			} catch (UnsupportedEncodingException e) {
 			
 				result = UUID.randomUUID();
+			}
+			
+			return result;
+		}
+
+		public Date getInfiniteDate()
+		{
+			Date result = null;
+			try {
+				String sDate1="31/12/9999";  
+				result = new SimpleDateFormat("dd/MM/yyyy").parse(sDate1); 
+					
+			}
+			catch(Exception e)
+			{
+			// Swallow exception	
 			}
 			
 			return result;

@@ -11,6 +11,7 @@ public enum SequenceType {
 	Metadata("Metadata"),
 	UserVerifyToken("UserVerifyToken"),
 	Channel("Channel"),
+    ChannelMember("ChannelMember"),
 	
 	;
 	

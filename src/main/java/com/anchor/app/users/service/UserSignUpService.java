@@ -12,6 +12,8 @@ import com.anchor.app.exceptions.UserServiceException;
 import com.anchor.app.oauth.enums.UserIdentifyType;
 import com.anchor.app.oauth.enums.UserRoleType;
 import com.anchor.app.oauth.enums.VisibilityType;
+import com.anchor.app.msg.exceptions.ChannelServiceException;
+import com.anchor.app.msg.service.ChannelService;
 import com.anchor.app.oauth.model.User;
 import com.anchor.app.oauth.model.UserAuth;
 import com.anchor.app.oauth.model.UserVerifyToken;
@@ -38,6 +40,9 @@ public class UserSignUpService {
     
     @Autowired
     private UserVerifyTokenRepository userVerifyTokenRepository;
+    
+    @Autowired
+    private ChannelService channelService;
     
     @Autowired
     private HelperBean helperBean;
@@ -235,10 +240,13 @@ public class UserSignUpService {
             userVerifyTokenRepository.save(verifyToken);
             logger.info("Verification token created for user: {}", userId);
             
+            // Create Self Channel for user using ChannelService
+            channelService.createSelfChannel(userId, userName);
+            
             // Populate response fields in request object
             request.setUserId(userId);
             request.setVerificationToken(token);
-            request.setErrorMessage("User registered successfully. Please verify your email.");
+           
             
         }
         catch(Exception e)
