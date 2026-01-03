@@ -1,8 +1,8 @@
 package com.anchor.app.users.dto;
 
 import com.anchor.app.dto.BaseVo;
-import com.anchor.app.oauth.enums.UserRoleType;
 import com.anchor.app.oauth.enums.VisibilityType;
+import com.anchor.app.users.enums.UserRoleType;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

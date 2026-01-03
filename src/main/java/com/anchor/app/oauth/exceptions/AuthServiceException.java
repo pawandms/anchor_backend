@@ -1,4 +1,6 @@
-package com.anchor.app.exceptions;
+package com.anchor.app.oauth.exceptions;
+
+import com.anchor.app.exceptions.BaseException;
 
 public class AuthServiceException extends BaseException {
 

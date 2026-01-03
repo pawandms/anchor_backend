@@ -1,4 +1,4 @@
-package com.anchor.app.oauth.enums;
+package com.anchor.app.users.enums;
 
 import java.util.HashMap;
 import java.util.Map;

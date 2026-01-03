@@ -120,6 +120,10 @@ public class EnvProp {
 
 			populateMongoDbConfig();
 
+			// Populate Minio Config
+			populateMinioConfig();
+		
+
 			/* 
 			populateAuthConfig();
 			
@@ -146,8 +150,6 @@ public class EnvProp {
 			//HLS Config
 			populateHlsConfig();
 			
-			// Populate Minio Config
-			populateMinioConfig();
 			
 			// Populate Messaging Queue Config
 			populateMsgQueueConfig();	

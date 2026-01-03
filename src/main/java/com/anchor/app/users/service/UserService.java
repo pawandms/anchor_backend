@@ -6,19 +6,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.anchor.app.dto.ErrorMsg;
 import com.anchor.app.exceptions.UserServiceException;
+import com.anchor.app.exceptions.ValidationException;
+import com.anchor.app.media.model.Media;
+import com.anchor.app.media.service.MediaService;
+import com.anchor.app.oauth.dto.AuthReq;
+import com.anchor.app.oauth.enums.PermissionType;
 import com.anchor.app.oauth.enums.UserIdentifyType;
-import com.anchor.app.oauth.enums.UserRoleType;
 import com.anchor.app.oauth.enums.VisibilityType;
-import com.anchor.app.msg.exceptions.ChannelServiceException;
+import com.anchor.app.oauth.exceptions.AuthServiceException;
 import com.anchor.app.msg.service.ChannelService;
 import com.anchor.app.oauth.model.User;
 import com.anchor.app.oauth.model.UserAuth;
 import com.anchor.app.oauth.model.UserVerifyToken;
+import com.anchor.app.oauth.service.AuthService;
+import com.anchor.app.oauth.service.IAuthenticationFacade;
 import com.anchor.app.users.dto.SignUpRequest;
-import com.anchor.app.users.exceptions.ValidationException;
+import com.anchor.app.users.enums.UserRoleType;
 import com.anchor.app.users.repository.UserAuthRepository;
 import com.anchor.app.users.repository.UserRepository;
 import com.anchor.app.users.repository.UserVerifyTokenRepository;
@@ -26,9 +33,10 @@ import com.anchor.app.util.HelperBean;
 import com.anchor.app.util.enums.SequenceType;
 
 import java.util.Date;
+import java.util.Optional;
 
 @Service
-public class UserSignUpService {
+public class UserService {
     
    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     
@@ -46,6 +54,15 @@ public class UserSignUpService {
     
     @Autowired
     private HelperBean helperBean;
+
+    @Autowired
+	private IAuthenticationFacade authfacade;
+
+    @Autowired
+	private AuthService authService;
+    
+    @Autowired
+    private MediaService mediaService;
     
     /**
      * Validate structural errors from BindingResult (annotation-based validation)
@@ -265,6 +282,128 @@ public class UserSignUpService {
         return userRepository.existsByEmail(email);
     }
     
+
     
+	public User getUserDetails(String userName) throws UserServiceException {
+			
+		User user = null;
+		try {
+			UserAuth userAuth = getUserAuthDetails(userName);
+			
+			if(null != userAuth)
+			{
+				String userID = userAuth.getId();
+				Optional<User> userOpt = userRepository.findById(userID);
+				
+                if(userOpt.isPresent())
+                {
+                    user = userOpt.get();
+                }    
+				
+			}
+		
+		}
+		catch(Exception e)
+		{
+			throw new UserServiceException(e.getMessage(), e);
+		}
+		
+		return user;
+	}
+
+    
+	public UserAuth getUserAuthDetails(String userName) throws UserServiceException {
+		
+		UserAuth uauth = null;
+		
+		try {
+			
+			if( null != userName)
+			{
+				uauth = userAuthRepository.findByUserName(userName);
+				
+			}
+		}
+		catch(Exception e)
+		{
+			throw new UserServiceException(e.getMessage(), e);
+		}
+		
+		return uauth;
+	}
+
+    
+    public String addUpdateUserProfileImage(String userID, MultipartFile profileImage) throws UserServiceException
+    {
+        String mediaId = null;
+        try{
+
+            // Perform Authorization
+            User user = authfacade.getApiAuthenticationDetails();
+        	if( null == user)
+        	{
+        		throw new UserServiceException("Invalid authenticated user");
+        	}
+        	
+        	// perform Authorization
+			AuthReq authReq = new AuthReq(user.getId(),userID, PermissionType.UsrEdit);
+
+            boolean hasPermission = authService.hasPersmission(authReq);
+		
+		 if(!hasPermission)
+		 {
+			 throw new AuthServiceException("Invalid Perssion");
+		 }
+         
+         mediaId = user.getProfileImageMediaId();
+
+         Media media = mediaService.saveUserProfileImage(userID, mediaId, profileImage);
+
+         // Update User Object for ProfileImageID
+         updateProfileImageMediaId(userID, media.getId());
+
+         mediaId = media.getId();
+			
+        }
+        catch(Exception e)
+        {
+            throw new UserServiceException(e.getMessage(), e);
+        }
+
+        return mediaId;
+
+    }
+
+    /**
+     * Update profileImageMediaId for a user
+     * Uses repository method for direct field update
+     * 
+     * @param userId User ID
+     * @param mediaId Media ID to set as profile image
+     * @throws UserServiceException if update fails
+     */
+    private  void updateProfileImageMediaId(String userId, String mediaId) throws UserServiceException {
+        try {
+            // Check if user exists
+            if (!userRepository.existsById(userId)) {
+                throw new UserServiceException("User not found with ID: " + userId);
+            }
+            
+            // Update using repository method
+            userRepository.updateProfileImageMediaId(userId, mediaId, userId, new Date());
+            
+            logger.info("Successfully updated profileImageMediaId for user: {}", userId);
+            
+        } catch (Exception e) {
+            logger.error("Error updating profileImageMediaId for user: {}", userId, e);
+            throw new UserServiceException("Failed to update profile image media ID: " + e.getMessage(), e);
+        }
+    }
+
+
+    
+
+    
+
     
 }

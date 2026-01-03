@@ -9,12 +9,10 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import com.anchor.app.users.dto.SignUpRequest;
-import com.anchor.app.users.exceptions.ValidationException;
-import com.anchor.app.users.service.UserSignUpService;
+import com.anchor.app.users.service.UserService;
 
 import jakarta.validation.Valid;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -24,7 +22,7 @@ public class UserSignUpController {
     Logger logger = LoggerFactory.getLogger(UserSignUpController.class);
     
     @Autowired
-    private UserSignUpService userSignUpService;
+    private UserService userSignUpService;
     
     /**
      * User sign up endpoint

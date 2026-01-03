@@ -12,6 +12,12 @@ spring:
   main:
     allow-circular-references: true
   
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
+  
   mvc:
    apiversion:
     supported: v1,v2
@@ -62,3 +68,18 @@ spring:
 
 server:
   port: 8080
+
+minio:
+  accessKey: jJTPPswMUHSkgMcLHTzI
+  secretKey: kyeAvN9OOrUulaWIoKOAx9scGy9eApQKn3eW6Bsv
+  #mediabucketName: media
+  #imgbucketName: image
+  # Widnows Local Minio
+  #accessKey: minioadmin
+  #secretKey: minioadmin
+  url: http://127.0.0.1:9000
+  bucket:
+    media: anchor-media
+    image: anchor-image
+    msg: anchor-msg
+    userProfile: anchor-profile

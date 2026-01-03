@@ -1,6 +1,4 @@
-package com.anchor.app.users.exceptions;
-
-import com.anchor.app.exceptions.BaseException;
+package com.anchor.app.exceptions;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,5 +1,8 @@
-package com.anchor.app.msg.model;
+package com.anchor.app.media.model;
 
+import com.anchor.app.media.enums.MediaEntityType;
+import com.anchor.app.media.enums.MediaMimeType;
+import com.anchor.app.media.enums.MediaType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,14 +23,15 @@ public class Media {
     @Id
     private String id;
     
-    private String entityType; // MESSAGE, USER_PROFILE, CHANNEL_AVATAR, STATUS, CALL
+    private MediaEntityType entityType;
     private String entityId;
     private String uploadedBy;
-    private String type; // IMAGE, VIDEO, AUDIO, DOCUMENT, VOICE, PROFILE_IMAGE, THUMBNAIL
+    private MediaType type;
     private Integer sequence;
     private String fileName;
+    private String name;
+    private String extension;
     private Long fileSize;
-    private String mimeType;
     private Integer duration;
     private Integer width;
     private Integer height;
@@ -35,11 +39,11 @@ public class Media {
     private Date uploadedAt;
     private String s3Bucket;
     private String s3Region;
-    private String s3Key;
-    private String s3VersionId;
-    private String storageClass;
-    private String cdnUrl;
-    private String thumbnailS3Key;
+    private String contentKey;
+    //private String s3VersionId;
+    //private String storageClass;
+    //private String cdnUrl;
+    private String thumbnailContentKey;
     private Map<String, Object> s3Metadata;
     private Boolean isDeleted;
     private Date deletedAt;

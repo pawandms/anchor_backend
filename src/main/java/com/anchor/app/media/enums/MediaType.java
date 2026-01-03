@@ -1,18 +1,20 @@
-package com.anchor.app.msg.enums;
+package com.anchor.app.media.enums;
 
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Enum representing the type of media content.
+ */
 public enum MediaType {
-
-	IMAGE("IMAGE"),
-	VIDEO("VIDEO"),
-	AUDIO("AUDIO"),
-	DOCUMENT("DOCUMENT"),
-	VOICE("VOICE"),
-	PROFILE_IMAGE("PROFILE_IMAGE"),
-	THUMBNAIL("THUMBNAIL"),
-	
+    
+    Audio("Audio"),
+	Video("Video"),
+	HlsVideo("HlsVideo"),
+	Image("Image"),
+	MultiMedia("MultiMedia"),
+	Document("Document"),
+	Invalid ("Invalid"),
 	;
 	
 	
