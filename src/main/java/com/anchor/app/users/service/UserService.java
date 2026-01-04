@@ -9,6 +9,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.anchor.app.dto.ErrorMsg;
+import com.anchor.app.enums.ValidationErrorType;
 import com.anchor.app.exceptions.UserServiceException;
 import com.anchor.app.exceptions.ValidationException;
 import com.anchor.app.media.model.Media;
@@ -95,7 +96,7 @@ public class UserService {
         } catch (Exception e) {
             logger.error("Error during structural validation: {}", e.getMessage(), e);
             request.setValid(false);
-            request.getErrors().add(new ErrorMsg("VALIDATION_ERROR", "general", "Error during validation: " + e.getMessage()));
+            request.getErrors().add(new ErrorMsg(ValidationErrorType.Invalid_Request.name(), "general", "Error during validation: " + e.getMessage()));
         }
     }
     
@@ -110,7 +111,7 @@ public class UserService {
             if (userRepository.existsByEmail(request.getEmail())) {
                 logger.warn("Registration failed - email already exists: {}", request.getEmail());
                 request.setValid(false);
-                request.getErrors().add(new ErrorMsg("EMAIL_EXISTS", "email", "Email already registered in the system"));
+                request.getErrors().add(new ErrorMsg(ValidationErrorType.Email_Already_Present.name(), "email", request.getEmail()));
             }
             
             // Validate username if provided
@@ -118,7 +119,7 @@ public class UserService {
                 if (userRepository.existsByUserName(request.getUserName())) {
                     logger.warn("Registration failed - username already exists: {}", request.getUserName());
                     request.setValid(false);
-                    request.getErrors().add(new ErrorMsg("USERNAME_EXISTS", "userName", "Username already taken"));
+                    request.getErrors().add(new ErrorMsg(ValidationErrorType.UserName_Already_Taken.name(), "userName", request.getUserName()));
                 }
             }
             
@@ -127,13 +128,13 @@ public class UserService {
                 if (userRepository.existsByMobile(request.getMobile())) {
                     logger.warn("Registration failed - mobile already exists: {}", request.getMobile());
                     request.setValid(false);
-                    request.getErrors().add(new ErrorMsg("MOBILE_EXISTS", "mobile", "Mobile number already registered"));
+                    request.getErrors().add(new ErrorMsg("MOBILE_EXISTS", "mobile", request.getMobile()));
                 }
             }
         } catch (Exception e) {
             logger.error("Error during business validation: {}", e.getMessage(), e);
             request.setValid(false);
-            request.getErrors().add(new ErrorMsg("DB_VALIDATION_ERROR", "general", "Database error during validation: " + e.getMessage()));
+            request.getErrors().add(new ErrorMsg(ValidationErrorType.Invalid_Request.name(), "general", "Database error during validation: " + e.getMessage()));
         }
     }
     

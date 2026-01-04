@@ -151,10 +151,19 @@ public class HelperBean {
 				  	if((extension.equalsIgnoreCase("jpg"))
 				  		||(extension.equalsIgnoreCase("jpeg"))	
 				  		||(extension.equalsIgnoreCase("png"))
+				  		||(extension.equalsIgnoreCase("gif"))
 				    )
 				  	{
-				  		type = MediaType.Image;
+				  		type = MediaType.Image_JPEG;
 				  	}
+					else if(extension.equalsIgnoreCase("png"))
+				  	{
+				  		type = MediaType.Image_PNG;
+				  	} 
+					else if(extension.equalsIgnoreCase("gif"))
+				  	{
+				  		type = MediaType.Image_GIF;
+				  	} 
 				  	else if((extension.equalsIgnoreCase("mp4"))
 					  	)
 				  	{
@@ -245,4 +254,6 @@ public class HelperBean {
 		    return string == null || string.isEmpty();
 		}
 
+
+		
 }

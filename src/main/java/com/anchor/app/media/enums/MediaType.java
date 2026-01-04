@@ -8,23 +8,27 @@ import java.util.Map;
  */
 public enum MediaType {
     
-    Audio("Audio"),
-	Video("Video"),
-	HlsVideo("HlsVideo"),
-	Image("Image"),
-	MultiMedia("MultiMedia"),
-	Document("Document"),
-	Invalid ("Invalid"),
+    Audio("Audio", org.springframework.http.MediaType.APPLICATION_OCTET_STREAM_VALUE),
+	Video("Video", org.springframework.http.MediaType.APPLICATION_OCTET_STREAM_VALUE),
+	HlsVideo("HlsVideo", org.springframework.http.MediaType.APPLICATION_OCTET_STREAM_VALUE),
+	Image_JPEG("Image_JPEG", org.springframework.http.MediaType.IMAGE_JPEG_VALUE),
+    Image_PNG("Image_PNG", org.springframework.http.MediaType.IMAGE_PNG_VALUE),
+    Image_GIF("Image_GIF", org.springframework.http.MediaType.IMAGE_GIF_VALUE),
+	MultiMedia("MultiMedia", org.springframework.http.MediaType.APPLICATION_OCTET_STREAM_VALUE),
+	Document("Document", org.springframework.http.MediaType.APPLICATION_OCTET_STREAM_VALUE),
+	Invalid ("Invalid", org.springframework.http.MediaType.APPLICATION_OCTET_STREAM_VALUE),
 	;
 	
 	
 	private String value;
+	private String contentType;
     private static Map<String, MediaType> map = new HashMap<String, MediaType>();
 
 	
-    private MediaType(String value )
+    private MediaType(String value, String contentType)
     {
-    this.value =value;	
+    this.value = value;
+    this.contentType = contentType;	
     }
     
     static {
@@ -41,6 +45,10 @@ public enum MediaType {
     
     public String getValue() {
         return value;
+    }
+    
+    public String getContentType() {
+        return contentType;
     }
 
 }

@@ -1,8 +1,10 @@
 package com.anchor.app.media.service;
 
+import com.anchor.app.dto.ErrorMsg;
+import com.anchor.app.enums.ValidationErrorType;
 import com.anchor.app.media.dto.ImageInfo;
+import com.anchor.app.media.dto.StreamMediaInfo;
 import com.anchor.app.media.enums.MediaEntityType;
-import com.anchor.app.media.enums.MediaMimeType;
 import com.anchor.app.media.enums.MediaType;
 import com.anchor.app.media.exceptions.MediaServiceException;
 import com.anchor.app.media.model.Media;
@@ -12,28 +14,21 @@ import com.anchor.app.util.HelperBean;
 import com.anchor.app.util.enums.SequenceType;
 
 import io.minio.*;
-import io.minio.errors.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class MediaService {
     
     private static final Logger logger = LoggerFactory.getLogger(MediaService.class);
-    
-    @Autowired
-    private MinioClient minioClient;
     
     @Autowired
     private EnvProp envProp;
@@ -135,7 +130,43 @@ public class MediaService {
     }
     
     
+    public StreamMediaInfo getUserProfileByMediaId(String mediaId) throws MediaServiceException
+    {
+        StreamMediaInfo result = new StreamMediaInfo();
+
+        try{
+            List<Media> mediaList  = mediaRepository.findByContentKey(mediaId);
+            if(mediaList.isEmpty())
+            {
+                result.setValid(false);
+                 result.getErrors().add(new ErrorMsg(ValidationErrorType.Invalid_Media_ID.name(), "mediaId", mediaId));
+            }
+
+               Media media = mediaList.getFirst();
+               result.setId(media.getId());
+               result.setMediaType(media.getType()); 
+               
+               InputStream mediaStream = storageService.getContenStream(media.getContentKey(), media.getS3Bucket());
+               
+               if( null != mediaStream)
+               {
+                result.setMediaStream(mediaStream);
+                result.setValid(true);
+
+               }
+                else {
+                result.setValid(false);
+                 result.getErrors().add(new ErrorMsg(ValidationErrorType.Invalid_Media_ID.name(), "mediaId", mediaId));
+                
+                }   
+            }
+        catch(Exception e)
+        {
+            throw new MediaServiceException(e.getMessage(), e);
+        }
+
+        return result;
+    }
     
-    
-    
-}
+ 
+}    

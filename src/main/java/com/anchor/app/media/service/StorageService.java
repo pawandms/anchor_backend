@@ -13,9 +13,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.anchor.app.media.exceptions.StorageServiceException;
 import com.anchor.app.util.EnvProp;
 
 import io.minio.BucketExistsArgs;
+import io.minio.GetObjectArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.UploadObjectArgs;
@@ -34,10 +36,7 @@ public class StorageService {
     @Autowired
 	MinioClient minioClient;
 	  
-	@Autowired
-	private EnvProp env;
-
-    public void putObject(String objectName, String bucketName, InputStream stream)
+	public void putObject(String objectName, String bucketName, InputStream stream)
 	{
 		
 		    try {
@@ -82,5 +81,24 @@ public class StorageService {
 		      }
 		      
 	}
+
+
+	public InputStream getContenStream(String contentID, String bucketName) throws StorageServiceException {
+		
+		InputStream stream = null;
+		 try {
+			
+		     GetObjectArgs objReq =  GetObjectArgs.builder().bucket(bucketName).object(contentID).build();
+	         stream =minioClient.getObject(objReq);
+	        
+		 } catch ( Exception e) {
+	          
+	        	throw new StorageServiceException(e.getMessage(), e);
+	      }
+		 	
+		 return stream;
+
+	}
+
 
 }

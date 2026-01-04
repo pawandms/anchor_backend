@@ -17,7 +17,6 @@ public class ImageInfo {
 		return extn;
 	}
 	
-	
 	public long getSize() {
 		return size;
 	}

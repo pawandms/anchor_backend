@@ -38,6 +38,30 @@ services:
       timeout: 20s
       retries: 3
 
+  centrifugo:
+    image: centrifugo/centrifugo:v6
+    container_name: centrifugo
+    restart: always
+    ports:
+      - "8000:8000"  # HTTP API and Web interface
+      - "8001:8001"  # gRPC API (optional)
+    environment:
+      CENTRIFUGO_TOKEN_HMAC_SECRET_KEY: "your-secret-key-change-this"
+      CENTRIFUGO_API_KEY: "your-api-key-change-this"
+      CENTRIFUGO_ADMIN_PASSWORD: "admin"
+      CENTRIFUGO_ADMIN_SECRET: "your-admin-secret-change-this"
+      CENTRIFUGO_ALLOWED_ORIGINS: "*"
+    volumes:
+      - ./centrifugo/config.json:/centrifugo/config.json
+    command: centrifugo --config=/centrifugo/config.json
+    networks:
+      - anchor-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 networks:
   anchor-network:
     driver: bridge

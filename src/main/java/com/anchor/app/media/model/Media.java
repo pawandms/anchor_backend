@@ -1,7 +1,6 @@
 package com.anchor.app.media.model;
 
 import com.anchor.app.media.enums.MediaEntityType;
-import com.anchor.app.media.enums.MediaMimeType;
 import com.anchor.app.media.enums.MediaType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

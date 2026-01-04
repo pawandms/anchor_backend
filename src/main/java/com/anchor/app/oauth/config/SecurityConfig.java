@@ -66,7 +66,7 @@ import com.nimbusds.jose.proc.SecurityContext;
 @EnableWebSecurity
 public class SecurityConfig {
 
- private final Logger logger = LoggerFactory.getLogger(this.getClass());
+ private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
 
 	@Autowired
 	private DatabaseUserDetailsService databaseUserDetailsService;
@@ -189,6 +189,18 @@ public class SecurityConfig {
 
 		return http.build();
 	}
+	
+	@Bean 
+	@Order(3)
+	SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+		http
+			.authorizeHttpRequests(authorize -> authorize
+				.anyRequest().permitAll()
+			)
+			.csrf(csrf -> csrf.disable());
+		
+		return http.build();
+	}
 
 
 	@Bean
@@ -199,7 +211,7 @@ public class SecurityConfig {
 
 	@Bean 
 	JWKSource<SecurityContext> jwkSource() {
-		KeyPair keyPair = generateRsaKey();
+		KeyPair keyPair = loadOrGenerateRsaKey();
 		RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
 		RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
 		RSAKey rsaKey = new RSAKey.Builder(publicKey)
@@ -210,23 +222,77 @@ public class SecurityConfig {
 		return new ImmutableJWKSet<>(jwkSet);
 	}
 
+	private static KeyPair loadOrGenerateRsaKey() {
+		try {
+			// Try to load existing keys first
+			java.io.File privateKeyFile = new java.io.File("jwt-private-key.pem");
+			java.io.File publicKeyFile = new java.io.File("jwt-public-key.pem");
+			
+			if (privateKeyFile.exists() && publicKeyFile.exists()) {
+				logger.info("Loading existing RSA keys from files...");
+				return loadKeyPairFromFiles(privateKeyFile, publicKeyFile);
+			} else {
+				logger.info("Generating new RSA keys and saving to files...");
+				KeyPair keyPair = generateRsaKey();
+				saveKeyPairToFiles(keyPair, privateKeyFile, publicKeyFile);
+				return keyPair;
+			}
+		} catch (Exception ex) {
+			logger.error("Error loading/generating RSA keys", ex);
+			throw new IllegalStateException(ex);
+		}
+	}
+	
+	private static KeyPair loadKeyPairFromFiles(java.io.File privateKeyFile, java.io.File publicKeyFile) throws Exception {
+		// Read private key
+		String privateKeyContent = new String(java.nio.file.Files.readAllBytes(privateKeyFile.toPath()))
+			.replace("-----BEGIN PRIVATE KEY-----", "")
+			.replace("-----END PRIVATE KEY-----", "")
+			.replaceAll("\\s", "");
+		byte[] privateKeyBytes = java.util.Base64.getDecoder().decode(privateKeyContent);
+		java.security.spec.PKCS8EncodedKeySpec privateKeySpec = new java.security.spec.PKCS8EncodedKeySpec(privateKeyBytes);
+		java.security.KeyFactory keyFactory = java.security.KeyFactory.getInstance("RSA");
+		java.security.PrivateKey privateKey = keyFactory.generatePrivate(privateKeySpec);
+		
+		// Read public key
+		String publicKeyContent = new String(java.nio.file.Files.readAllBytes(publicKeyFile.toPath()))
+			.replace("-----BEGIN PUBLIC KEY-----", "")
+			.replace("-----END PUBLIC KEY-----", "")
+			.replaceAll("\\s", "");
+		byte[] publicKeyBytes = java.util.Base64.getDecoder().decode(publicKeyContent);
+		java.security.spec.X509EncodedKeySpec publicKeySpec = new java.security.spec.X509EncodedKeySpec(publicKeyBytes);
+		java.security.PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
+		
+		return new KeyPair(publicKey, privateKey);
+	}
+	
+	private static void saveKeyPairToFiles(KeyPair keyPair, java.io.File privateKeyFile, java.io.File publicKeyFile) throws Exception {
+		// Save private key
+		java.security.spec.PKCS8EncodedKeySpec privateKeySpec = new java.security.spec.PKCS8EncodedKeySpec(keyPair.getPrivate().getEncoded());
+		String privateKeyPem = "-----BEGIN PRIVATE KEY-----\n" +
+			java.util.Base64.getEncoder().encodeToString(privateKeySpec.getEncoded()) +
+			"\n-----END PRIVATE KEY-----\n";
+		java.nio.file.Files.write(privateKeyFile.toPath(), privateKeyPem.getBytes());
+		
+		// Save public key
+		java.security.spec.X509EncodedKeySpec publicKeySpec = new java.security.spec.X509EncodedKeySpec(keyPair.getPublic().getEncoded());
+		String publicKeyPem = "-----BEGIN PUBLIC KEY-----\n" +
+			java.util.Base64.getEncoder().encodeToString(publicKeySpec.getEncoded()) +
+			"\n-----END PUBLIC KEY-----\n";
+		java.nio.file.Files.write(publicKeyFile.toPath(), publicKeyPem.getBytes());
+		
+		logger.info("RSA keys saved to: {} and {}", privateKeyFile.getAbsolutePath(), publicKeyFile.getAbsolutePath());
+	}
+
 	private static KeyPair generateRsaKey() { 
-		KeyPair keyPair;
 		try {
 			KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
 			keyPairGenerator.initialize(2048);
-			// Use a fixed seed for deterministic key generation in development
-			// IMPORTANT: Only use this in development, not in production!
-			// For production, load keys from a keystore or external secure storage
-			java.security.SecureRandom secureRandom = java.security.SecureRandom.getInstance("SHA1PRNG");
-			secureRandom.setSeed("anchor-seed-2025".getBytes()); // Fixed seed for dev
-			keyPairGenerator.initialize(2048, secureRandom);
-			keyPair = keyPairGenerator.generateKeyPair();
+			return keyPairGenerator.generateKeyPair();
 		}
 		catch (Exception ex) {
 			throw new IllegalStateException(ex);
 		}
-		return keyPair;
 	}
 
 	@Bean 

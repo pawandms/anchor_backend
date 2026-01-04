@@ -1,0 +1,16 @@
+{
+  "client": {
+    "allowed_origins": ["*"],
+    "token": {
+      "rsa_public_key": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAv2nAX+jH5/v067A3VRk7baIRtDq4kzFU8T1bn22iL14GOzqG9BCCgO0SKdYexdkoF/z48hQOCcvpAuSw8d1riRi8hlj6FZ8IqldZVL3dHV059LbmHsu0dDfGaF9PQkEUPN9B6ZftfKwzNlPQwVckTj9K7iQ4RG1T3a2gUuZK8EnVDP2Yaaetl0vDCNpg+0pyEqCUIc5jAHdSMCEW/zw2lWtXpSOep7RlwX/vduDn06zV+6FtsnrtMVi+BrTpnRKBSw1GvBrB1nsEnaKh7FE1sL8hrIMl0+5PAtRk1REcXca/GHY9jtpKdoMXt5tSWDzIHwbC7loF6Ip6rMxMlef1sQIDAQAB\n-----END PUBLIC KEY-----"
+    }
+  },
+  "http_api": {
+    "key": "anchor-api-key-2025"
+  },
+  "admin": {
+    "password": "admin",
+    "secret": "anchor-admin-secret-2025",
+    "enabled": true
+  }
+}

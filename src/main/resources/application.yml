@@ -1,5 +1,6 @@
 server:
   servlet:
+    context-path: /
     session:
       tracking-modes: 'COOKIE'
       timeout: 30m
@@ -11,7 +12,7 @@ spring:
     active: ${spring_profiles_active}
   main:
     allow-circular-references: true
-  
+
   servlet:
     multipart:
       enabled: true
@@ -24,7 +25,7 @@ spring:
     default: v1
     use:
       path-segment: 1
- 
+
   mongodb:
     uri: mongodb://admin:admin123@localhost:27018/msgdb?authSource=admin
     database: msgdb
@@ -33,7 +34,13 @@ spring:
 #mongodb:
 #  database: msgdb
 #  url: mongodb://admin:admin123@localhost:27018/msgdb?authSource=admin
-  
+
+thymeleaf:
+      cache: false
+      enabled: true
+      prefix: classpath:/templates/
+      suffix: .html
+
 ---
 spring:
   config:

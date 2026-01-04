@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Centrifugo User Presence Demo</title>
+    <script src="https://unpkg.com/centrifuge@5.1.1/dist/centrifuge.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .status-box {
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+        .active { background-color: #d4edda; border-color: #28a745; }
+        .inactive { background-color: #f8d7da; border-color: #dc3545; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+        .btn-active { background-color: #28a745; color: white; }
+        .btn-inactive { background-color: #dc3545; color: white; }
+        .log {
+            background-color: #f5f5f5;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            background-color: white;
+            border-left: 3px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <h1>Centrifugo User Presence Demo</h1>
+    
+    <div>
+        <label>User ID: <input type="text" id="userId" value="user123" /></label>
+        <br><br>
+        <label>JWT Token (from Spring OAuth2): 
+            <textarea id="jwtToken" rows="3" cols="80" placeholder="Paste your JWT access token here"></textarea>
+        </label>
+        <br><br>
+        <button onclick="debugToken()" style="background-color: #ffc107; color: black;">Debug Token</button>
+        <button onclick="connect()" style="background-color: #007bff; color: white;">Connect</button>
+        <button onclick="disconnect()" style="background-color: #6c757d; color: white;">Disconnect</button>
+    </div>
+    
+    <div>
+        <h4>To get a JWT token:</h4>
+        <ol>
+            <li>Use Postman or curl to get OAuth2 token from <code>POST /oauth2/token</code></li>
+            <li>Copy the <code>access_token</code> value</li>
+            <li>Paste it in the JWT Token field above</li>
+            <li>Click "Debug Token" to verify it has the correct "kid" header</li>
+            <li>Click Connect</li>
+        </ol>
+    </div>
+    
+    <div class="status-box" id="statusBox">
+        <h3>Connection Status: <span id="connectionStatus">Disconnected</span></h3>
+        <h3>User Status: <span id="userStatus">Unknown</span></h3>
+    </div>
+    <div>
+        <h3>Control Panel</h3>
+        <button class="btn-active" onclick="setActive()">Set Active</button>
+        <button class="btn-inactive" onclick="setInactive()">Set Inactive</button>
+    </div>
+    
+    <div>
+        <h3>Event Log</h3>
+        <div class="log" id="eventLog"></div>
+    </div>
+    
+    <script>
+        let centrifuge;
+        let subscription;
+        
+        function log(message, data) {
+            const logDiv = document.getElementById('eventLog');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+            if (data) {
+                entry.innerHTML += `<br><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            }
+            logDiv.insertBefore(entry, logDiv.firstChild);
+        }
+        
+        function connect() {
+            const userId = document.getElementById('userId').value;
+            const token = document.getElementById('jwtToken').value.trim();
+            
+            if (!token) {
+                alert('Please paste a JWT token first!');
+                return;
+            }
+            
+            // Connect with JWT token
+            centrifuge = new Centrifuge('ws://localhost:8000/connection/websocket', {
+                token: token
+            });
+            
+            centrifuge.on('connecting', function(ctx) {
+                log('Connecting...', ctx);
+                document.getElementById('connectionStatus').textContent = 'Connecting...';
+            });
+            
+            centrifuge.on('connected', function(ctx) {
+                log('Connected to Centrifugo', ctx);
+                document.getElementById('connectionStatus').textContent = 'Connected';
+                subscribeToUserStatus(userId);
+            });
+            
+            centrifuge.on('disconnected', function(ctx) {
+                log('Disconnected from Centrifugo', ctx);
+                document.getElementById('connectionStatus').textContent = 'Disconnected';
+            });
+            
+            centrifuge.connect();
+        }
+        
+        function subscribeToUserStatus(userId) {
+            const channel = `user:status:${userId}`;
+            
+            subscription = centrifuge.newSubscription(channel);
+            
+            subscription.on('publication', function(ctx) {
+                log('Received publication', ctx.data);
+                
+                if (ctx.data.status) {
+                    document.getElementById('userStatus').textContent = ctx.data.status;
+                    const statusBox = document.getElementById('statusBox');
+                    statusBox.className = 'status-box ' + ctx.data.status;
+                }
+            });
+            
+            subscription.on('subscribing', function(ctx) {
+                log('Subscribing to ' + channel);
+            });
+            
+            subscription.on('subscribed', function(ctx) {
+                log('Subscribed to ' + channel, ctx);
+            });
+            
+            subscription.subscribe();
+        }
+        
+        function disconnect() {
+            if (centrifuge) {
+                centrifuge.disconnect();
+            }
+        }
+        
+        function setActive() {
+            const userId = document.getElementById('userId').value;
+            fetch(`/api/v1/presence/${userId}/active`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                log('Set user active via API', data);
+            })
+            .catch(error => {
+                log('Error setting user active', {error: error.message});
+            });
+        }
+        
+        function debugToken() {
+            const token = document.getElementById('jwtToken').value.trim();
+            
+            if (!token) {
+                alert('Please paste a JWT token first!');
+                return;
+            }
+            
+            fetch('/api/v1/public/token/debug', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ token: token })
+            })
+            .then(response => response.json())
+            .then(data => {
+                log('Token Debug Information', data);
+                if (data.header && data.header.kid) {
+                    log('✅ Token has kid: ' + data.header.kid);
+                } else {
+                    log('❌ Token missing "kid" in header!', data.header);
+                }
+            })
+            .catch(error => {
+                log('Error debugging token', {error: error.message});
+            });
+        }
+        
+        function setInactive() {
+            const userId = document.getElementById('userId').value;
+            fetch(`/api/v1/presence/${userId}/inactive`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                log('Set user inactive via API', data);
+            })
+            .catch(error => {
+                log('Error setting user inactive', {error: error.message});
+            });
+        }
+    </script>
+</body>
+</html>

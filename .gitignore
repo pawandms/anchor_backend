@@ -6,6 +6,8 @@ minio/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+jwt-private-key.pem
+jwt-public-key.pem
 
 ### STS ###
 .apt_generated
