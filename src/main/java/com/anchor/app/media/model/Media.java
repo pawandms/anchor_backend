@@ -21,7 +21,7 @@ public class Media {
     
     @Id
     private String id;
-    
+    private String userId;
     private MediaEntityType entityType;
     private String entityId;
     private String uploadedBy;

@@ -1,7 +1,6 @@
 package com.anchor.app.users.controller;
 
-import com.anchor.app.media.model.Media;
-import com.anchor.app.media.service.MediaService;
+import com.anchor.app.media.dto.StreamMediaInfo;
 import com.anchor.app.users.service.UserService;
 
 import org.slf4j.Logger;
@@ -32,25 +31,41 @@ public class UserController {
      * @param file Profile image file
      * @return ProfileImageResponse with upload details
      */
-    @PostMapping(value = "{userId}/media/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "{userId}/media/profile-image", 
+                 consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+                 produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> uploadProfileImage(
             @PathVariable String userId,
-            @RequestParam("file") MultipartFile file) {
+            @RequestParam(value = "file", required = true) MultipartFile file) {
         
           ResponseEntity<?> response = null;
+          StreamMediaInfo req = null;
         try {
+            req.setUserID(userId);
+            req.setInputFile(file);
             
             // Upload file to MinIO
-            String mediaID  = userService.addUpdateUserProfileImage(userId, file);
+            userService.addUpdateUserProfileImage(req);
+            if(req.isValid())
+            {
+                response =  ResponseEntity.status(HttpStatus.CREATED).body(req);    
+            }   
             
-            // Create response body
-            Map<String, String> responseBody = new HashMap<>();
-            responseBody.put("profileImageID", mediaID);
-            
-            response =  ResponseEntity.status(HttpStatus.CREATED).body(responseBody);
             
         } catch (Exception e) {
-             response =  new ResponseEntity<>("User profile Update  Error Msg:"+e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);	
+            
+            if(!req.getErrors().isEmpty())
+            {
+               response =  ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "success", false,
+                "message", "Validation failed",
+                "errors", req.getErrors()
+            ));
+            }
+            else {
+                response =  new ResponseEntity<>("set User Profile Error Msg:"+e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);	
+            }
+        
         }
 
         return response;

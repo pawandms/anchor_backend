@@ -98,7 +98,11 @@ public class AuthService  {
 				break;
 				
 			case CnView:
-				if((authReq.getReqUserRoles().contains(AuthUserRoleType.SuperAdmin))
+				if(authReq.getReqUserID().equalsIgnoreCase(authReq.getUserID()))
+				{
+					result = true;
+				}
+				else if((authReq.getReqUserRoles().contains(AuthUserRoleType.SuperAdmin))
 						|| (authReq.getReqUserRoles().contains(AuthUserRoleType.Admin))
 						|| (authReq.getReqUserRoles().contains(AuthUserRoleType.Author))
 						|| (authReq.getReqUserRoles().contains(AuthUserRoleType.Moderator))

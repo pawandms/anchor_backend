@@ -12,6 +12,7 @@ import com.anchor.app.dto.ErrorMsg;
 import com.anchor.app.enums.ValidationErrorType;
 import com.anchor.app.exceptions.UserServiceException;
 import com.anchor.app.exceptions.ValidationException;
+import com.anchor.app.media.dto.StreamMediaInfo;
 import com.anchor.app.media.model.Media;
 import com.anchor.app.media.service.MediaService;
 import com.anchor.app.oauth.dto.AuthReq;
@@ -334,11 +335,11 @@ public class UserService {
 	}
 
     
-    public String addUpdateUserProfileImage(String userID, MultipartFile profileImage) throws UserServiceException
+    public void addUpdateUserProfileImage(StreamMediaInfo req) throws UserServiceException
     {
         String mediaId = null;
         try{
-
+            req.setValid(true);
             // Perform Authorization
             User user = authfacade.getApiAuthenticationDetails();
         	if( null == user)
@@ -347,7 +348,7 @@ public class UserService {
         	}
         	
         	// perform Authorization
-			AuthReq authReq = new AuthReq(user.getId(),userID, PermissionType.UsrEdit);
+			AuthReq authReq = new AuthReq(user.getId(),req.getUserID(), PermissionType.UsrEdit);
 
             boolean hasPermission = authService.hasPersmission(authReq);
 		
@@ -357,13 +358,13 @@ public class UserService {
 		 }
          
          mediaId = user.getProfileImageMediaId();
-
-         Media media = mediaService.saveUserProfileImage(userID, mediaId, profileImage);
+         
+         Media media = mediaService.saveUserProfileImage(req.getUserID(), mediaId, req.getInputFile());
 
          // Update User Object for ProfileImageID
-         updateProfileImageMediaId(userID, media.getId());
-
-         mediaId = media.getId();
+         updateProfileImageMediaId(req.getUserID(), media.getId());
+         req.setMediaId(media.getId());
+         
 			
         }
         catch(Exception e)
@@ -371,7 +372,6 @@ public class UserService {
             throw new UserServiceException(e.getMessage(), e);
         }
 
-        return mediaId;
 
     }
 

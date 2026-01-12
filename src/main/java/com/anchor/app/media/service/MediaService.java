@@ -2,6 +2,7 @@ package com.anchor.app.media.service;
 
 import com.anchor.app.dto.ErrorMsg;
 import com.anchor.app.enums.ValidationErrorType;
+import com.anchor.app.exceptions.UserServiceException;
 import com.anchor.app.media.dto.ImageInfo;
 import com.anchor.app.media.dto.StreamMediaInfo;
 import com.anchor.app.media.enums.MediaEntityType;
@@ -9,6 +10,12 @@ import com.anchor.app.media.enums.MediaType;
 import com.anchor.app.media.exceptions.MediaServiceException;
 import com.anchor.app.media.model.Media;
 import com.anchor.app.media.repository.MediaRepository;
+import com.anchor.app.oauth.dto.AuthReq;
+import com.anchor.app.oauth.enums.PermissionType;
+import com.anchor.app.oauth.exceptions.AuthServiceException;
+import com.anchor.app.oauth.model.User;
+import com.anchor.app.oauth.service.AuthService;
+import com.anchor.app.oauth.service.IAuthenticationFacade;
 import com.anchor.app.util.EnvProp;
 import com.anchor.app.util.HelperBean;
 import com.anchor.app.util.enums.SequenceType;
@@ -41,6 +48,14 @@ public class MediaService {
 
     @Autowired
     private StorageService storageService;
+
+    @Autowired
+	private IAuthenticationFacade authfacade;
+
+    @Autowired
+	private AuthService authService;
+
+
     /**
      * Upload user profile image to MinIO
      * 
@@ -91,6 +106,7 @@ public class MediaService {
                 // Create and save media metadata
                 result = Media.builder()
                 .id(Id)
+                .userId(userId)
                 .entityType(entityType)
                 .entityId(Id)
                 .uploadedBy(userId)
@@ -130,33 +146,57 @@ public class MediaService {
     }
     
     
-    public StreamMediaInfo getUserProfileByMediaId(String mediaId) throws MediaServiceException
+    public void getUserProfileByMediaId(StreamMediaInfo req) throws MediaServiceException
     {
-        StreamMediaInfo result = new StreamMediaInfo();
-
+     
         try{
-            List<Media> mediaList  = mediaRepository.findByContentKey(mediaId);
+            req.setValid(true);
+            if( null == req.getMediaId())
+            {
+                req.setValid(false);
+                 req.getErrors().add(new ErrorMsg(ValidationErrorType.Invalid_Media_ID.name(), "mediaId", req.getMediaId()));
+                 throw new MediaServiceException("Invalid media ID:"+req.getMediaId());
+            }   
+
+            List<Media> mediaList   = mediaRepository.findAllByIdAndEntityType(req.getMediaId(), MediaEntityType.USER_PROFILE);
             if(mediaList.isEmpty())
             {
-                result.setValid(false);
-                 result.getErrors().add(new ErrorMsg(ValidationErrorType.Invalid_Media_ID.name(), "mediaId", mediaId));
+                req.setValid(false);
+                 req.getErrors().add(new ErrorMsg(ValidationErrorType.Invalid_Media_ID.name(), "mediaId", req.getMediaId()));
+                 throw new MediaServiceException("Invalid media ID:"+req.getMediaId());
             }
+              Media media = mediaList.get(0);
+               req.setMediaType(media.getType()); 
 
-               Media media = mediaList.getFirst();
-               result.setId(media.getId());
-               result.setMediaType(media.getType()); 
-               
+            
+               // Perform Authorization
+            User user = authfacade.getApiAuthenticationDetails();
+        	if( null == user)
+        	{
+        		throw new UserServiceException("Invalid authenticated user");
+        	}
+        	
+        	// perform Authorization
+			AuthReq authReq = new AuthReq(user.getId(),media.getUserId(), PermissionType.CnView);
+
+            boolean hasPermission = authService.hasPersmission(authReq);
+		
+		 if(!hasPermission)
+		 {
+			 throw new AuthServiceException("Invalid Perssion");
+		 }
+         
                InputStream mediaStream = storageService.getContenStream(media.getContentKey(), media.getS3Bucket());
                
                if( null != mediaStream)
                {
-                result.setMediaStream(mediaStream);
-                result.setValid(true);
+                req.setMediaStream(mediaStream);
+                req.setValid(true);
 
                }
                 else {
-                result.setValid(false);
-                 result.getErrors().add(new ErrorMsg(ValidationErrorType.Invalid_Media_ID.name(), "mediaId", mediaId));
+                req.setValid(false);
+                 req.getErrors().add(new ErrorMsg(ValidationErrorType.Invalid_Media_ID.name(), "mediaId", req.getMediaId()));
                 
                 }   
             }
@@ -165,7 +205,6 @@ public class MediaService {
             throw new MediaServiceException(e.getMessage(), e);
         }
 
-        return result;
     }
     
  

@@ -32,4 +32,7 @@ public interface MediaRepository extends MongoRepository<Media, String> {
     void deleteByEntityTypeAndEntityId(MediaEntityType entityType, String entityId);
 
     List<Media> findByContentKey(String contentKey);
+
+     List<Media> findAllByIdAndEntityType(String id , MediaEntityType entityType );
+   
 }
