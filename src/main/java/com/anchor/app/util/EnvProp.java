@@ -110,6 +110,11 @@ public class EnvProp {
 	private String natsServerUrl;
 	private String socketServer;
 	private int socketPort;
+
+	// Centrifuge Server Config
+	private String centrifugeServerUrl;
+	private String centrifugeAuthTokenSecret;
+	private int    centrifugeAuthTokenExpirationSec;
 	
 	private String fireBaseServiceFilePath;
 	
@@ -122,7 +127,9 @@ public class EnvProp {
 
 			// Populate Minio Config
 			populateMinioConfig();
-		
+			
+			// Populate Centrifuge Confige
+			populateCentrifugeConfig();
 
 			/* 
 			populateAuthConfig();
@@ -205,6 +212,42 @@ public class EnvProp {
 			
 		}
 
+	}
+
+		private void populateCentrifugeConfig()
+	{
+		String centrifugeServerUrl = env.getProperty("centrifuge.server.url");
+		
+		if( null == centrifugeServerUrl)
+		{
+			throw new RuntimeException("Unable to Fetch centrifuge Server config");
+		}
+		
+		this.centrifugeServerUrl = centrifugeServerUrl;
+
+	//	private String authTokenSecret;
+	//private String authTokenExpirationSec;
+	
+
+		String centrifugeAuthTokenSecret = env.getProperty("centrifuge.auth.hmacSecret");
+		
+		if( null == centrifugeAuthTokenSecret)
+		{
+			throw new RuntimeException("Unable to Fetch centrifuge Auth Secret");
+		}
+		
+		this.centrifugeAuthTokenSecret = centrifugeAuthTokenSecret;
+
+		String centrifugeAuthTokenExpirationSec = env.getProperty("centrifuge.auth.expirationSeconds");
+		
+		if( null == centrifugeAuthTokenExpirationSec)
+		{
+			throw new RuntimeException("Unable to Fetch centrifuge Token Expiration");
+		}
+		
+		this.centrifugeAuthTokenExpirationSec = Integer.parseInt(centrifugeAuthTokenExpirationSec);
+
+		
 	}
 
 	private void populateAuthConfig()
@@ -650,8 +693,19 @@ public class EnvProp {
 		return eventLogQueueName;
 	}
 
+	public String getCentrifugeServerUrl() {
+		return centrifugeServerUrl;
+	}
+
+	public String getCentrifugeAuthTokenSecret() {
+		return centrifugeAuthTokenSecret;
+	}
+
+	public int getCentrifugeAuthTokenExpirationSec() {
+		return centrifugeAuthTokenExpirationSec;
+	}
 
 	
-	
-	
+
+		
 }

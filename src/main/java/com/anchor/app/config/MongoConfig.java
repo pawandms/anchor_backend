@@ -21,7 +21,7 @@ import com.mongodb.client.MongoClients;
 @EnableMongoAuditing
 public class MongoConfig {
 
-    	private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	@Autowired
 	private EnvProp env;

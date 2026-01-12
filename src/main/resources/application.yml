@@ -41,6 +41,7 @@ thymeleaf:
       prefix: classpath:/templates/
       suffix: .html
 
+
 ---
 spring:
   config:
@@ -49,7 +50,7 @@ spring:
 
 server:
   port: 8080
-
+  
   
 # Logging configuration
 logging:
@@ -90,3 +91,10 @@ minio:
     image: anchor-image
     msg: anchor-msg
     userProfile: anchor-profile
+
+centrifuge:
+    server:
+      url: ws://localhost:8000/connection/websocket
+    auth:
+      hmacSecret: anchor-centrifugo-secret-key-2025-must-be-at-least-256-bits-long
+      expirationSeconds: 120   

@@ -42,42 +42,71 @@
             background-color: white;
             border-left: 3px solid #007bff;
         }
+        .users-list {
+            background-color: #f5f5f5;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .user-item {
+            margin: 5px 0;
+            padding: 8px;
+            background-color: white;
+            border-left: 3px solid #28a745;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .user-item .user-info {
+            font-weight: bold;
+        }
+        .user-item .user-client {
+            font-size: 0.8em;
+            color: #666;
+        }
     </style>
 </head>
 <body>
     <h1>Centrifugo User Presence Demo</h1>
     
     <div>
-        <label>User ID: <input type="text" id="userId" value="user123" /></label>
-        <br><br>
-        <label>JWT Token (from Spring OAuth2): 
-            <textarea id="jwtToken" rows="3" cols="80" placeholder="Paste your JWT access token here"></textarea>
+        <label>JWT Token (OAuth2 Access Token): 
+            <textarea id="jwtToken" rows="3" cols="80" placeholder="Paste your OAuth2 access token here"></textarea>
         </label>
         <br><br>
-        <button onclick="debugToken()" style="background-color: #ffc107; color: black;">Debug Token</button>
         <button onclick="connect()" style="background-color: #007bff; color: white;">Connect</button>
         <button onclick="disconnect()" style="background-color: #6c757d; color: white;">Disconnect</button>
     </div>
     
     <div>
-        <h4>To get a JWT token:</h4>
+        <h4>How it works:</h4>
         <ol>
-            <li>Use Postman or curl to get OAuth2 token from <code>POST /oauth2/token</code></li>
-            <li>Copy the <code>access_token</code> value</li>
-            <li>Paste it in the JWT Token field above</li>
-            <li>Click "Debug Token" to verify it has the correct "kid" header</li>
-            <li>Click Connect</li>
+            <li>Get OAuth2 token from <code>POST /oauth2/token</code> using Postman/curl</li>
+            <li>Paste the <code>access_token</code> in the JWT Token field above</li>
+            <li>Click "Connect" - it will call backend API to get Centrifugo token using your JWT</li>
+            <li>Your connection will be established with the Centrifugo token</li>
         </ol>
     </div>
     
     <div class="status-box" id="statusBox">
         <h3>Connection Status: <span id="connectionStatus">Disconnected</span></h3>
+        <h3>User ID: <span id="userIdDisplay">-</span></h3>
+        <h3>User Name: <span id="userNameDisplay">-</span></h3>
         <h3>User Status: <span id="userStatus">Unknown</span></h3>
     </div>
     <div>
         <h3>Control Panel</h3>
         <button class="btn-active" onclick="setActive()">Set Active</button>
         <button class="btn-inactive" onclick="setInactive()">Set Inactive</button>
+    </div>
+    
+    <div>
+        <h3>Channel Users (user:status)</h3>
+        <div class="users-list" id="channelUsers">
+            <p style="color: #666;">No users in channel yet...</p>
+        </div>
     </div>
     
     <div>
@@ -88,6 +117,31 @@
     <script>
         let centrifuge;
         let subscription;
+        let channelUsers = {}; // Track users in channel by client ID
+        
+        function updateChannelUsersDisplay() {
+            const usersDiv = document.getElementById('channelUsers');
+            const userCount = Object.keys(channelUsers).length;
+            
+            if (userCount === 0) {
+                usersDiv.innerHTML = '<p style="color: #666;">No users in channel yet...</p>';
+            } else {
+                let html = `<p style="margin-bottom: 10px;"><strong>${userCount} user(s) in channel</strong></p>`;
+                for (let clientId in channelUsers) {
+                    const user = channelUsers[clientId];
+                    html += `
+                        <div class="user-item">
+                            <div>
+                                <div class="user-info">${user.user || 'Anonymous'}</div>
+                                <div class="user-client">Client: ${user.client}</div>
+                            </div>
+                            <div style="color: #28a745;">●</div>
+                        </div>
+                    `;
+                }
+                usersDiv.innerHTML = html;
+            }
+        }
         
         function log(message, data) {
             const logDiv = document.getElementById('eventLog');
@@ -100,18 +154,66 @@
             logDiv.insertBefore(entry, logDiv.firstChild);
         }
         
+        // Function to get connection token from backend API
+        async function getConnectionToken() {
+            try {
+                const jwtToken = document.getElementById('jwtToken').value.trim();
+                
+                if (!jwtToken) {
+                    throw new Error('Please paste your JWT token first!');
+                }
+                
+                log('Fetching connection token from backend...');
+                const response = await fetch('http://localhost:8080/api/v1/notification/client/token', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${jwtToken}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Failed to get token: ${response.status} ${response.statusText} - ${errorText}`);
+                }
+                
+                const data = await response.json();
+                log('Received token from backend', {
+                    userID: data.userID,
+                    userName: data.userName,
+                    subject: data.subject,
+                    expiration: data.expiration,
+                    expires_in: data.expires_in
+                });
+                
+                // Store user info globally
+                if (!window.currentUser) {
+                    window.currentUser = {
+                        userID: data.userID,
+                        userName: data.userName
+                    };
+                }
+                
+                return data.token;
+            } catch (error) {
+                log('Error fetching connection token', {error: error.message});
+                alert('Error: ' + error.message);
+                throw error;
+            }
+        }
+        
         function connect() {
-            const userId = document.getElementById('userId').value;
-            const token = document.getElementById('jwtToken').value.trim();
+            const jwtToken = document.getElementById('jwtToken').value.trim();
             
-            if (!token) {
-                alert('Please paste a JWT token first!');
+            if (!jwtToken) {
+                alert('Please paste your JWT token first!');
                 return;
             }
             
-            // Connect with JWT token
+            // Connect with token callback - Centrifuge will call this to get token
             centrifuge = new Centrifuge('ws://localhost:8000/connection/websocket', {
-                token: token
+                getToken: getConnectionToken,
+                debug: true
             });
             
             centrifuge.on('connecting', function(ctx) {
@@ -122,7 +224,15 @@
             centrifuge.on('connected', function(ctx) {
                 log('Connected to Centrifugo', ctx);
                 document.getElementById('connectionStatus').textContent = 'Connected';
-                subscribeToUserStatus(userId);
+                
+                // Wait a moment for currentUser to be populated, then subscribe
+                setTimeout(function() {
+                    if (window.currentUser && window.currentUser.userID) {
+                        subscribeToUserStatus(window.currentUser.userID);
+                    } else {
+                        log('Error: User info not available');
+                    }
+                }, 100);
             });
             
             centrifuge.on('disconnected', function(ctx) {
@@ -133,10 +243,61 @@
             centrifuge.connect();
         }
         
+        // Function to get subscription token for a specific channel
+        async function getSubscriptionToken(channel) {
+            try {
+                const jwtToken = document.getElementById('jwtToken').value.trim();
+                
+                if (!jwtToken) {
+                    throw new Error('JWT token not available');
+                }
+                
+                log(`Fetching subscription token for channel: ${channel}`);
+                const response = await fetch(`http://localhost:8080/api/v1/notification/channel/token?channel=${encodeURIComponent(channel)}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${jwtToken}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Failed to get subscription token: ${response.status} ${response.statusText} - ${errorText}`);
+                }
+                
+                const data = await response.json();
+                log(`Received subscription token for channel: ${channel}`, {
+                    userID: data.userID,
+                    userName: data.userName,
+                    channel: data.channel,
+                    expires_in: data.expires_in
+                });
+                
+                // Store user info globally for display
+                if (!window.currentUser) {
+                    window.currentUser = {
+                        userID: data.userID,
+                        userName: data.userName
+                    };
+                }
+                
+                return data.token;
+            } catch (error) {
+                log(`Error fetching subscription token for channel: ${channel}`, {error: error.message});
+                throw error;
+            }
+        }
+        
         function subscribeToUserStatus(userId) {
-            const channel = `user:status:${userId}`;
+            // Subscribe to presence channel to track user online status
+            const channel = `user:status`;
             
-            subscription = centrifuge.newSubscription(channel);
+            subscription = centrifuge.newSubscription(channel, {
+                getToken: async () => {
+                    return getSubscriptionToken(channel);
+                }
+            });
             
             subscription.on('publication', function(ctx) {
                 log('Received publication', ctx.data);
@@ -149,14 +310,63 @@
             });
             
             subscription.on('subscribing', function(ctx) {
-                log('Subscribing to ' + channel);
+                log('Subscribing to presence channel: ' + channel);
             });
             
             subscription.on('subscribed', function(ctx) {
-                log('Subscribed to ' + channel, ctx);
+                log('✅ Subscribed to presence channel: ' + channel + ' - Your presence is now tracked in backend!', ctx);
+                
+                // Update user info display
+                if (window.currentUser) {
+                    document.getElementById('userIdDisplay').textContent = window.currentUser.userID;
+                    document.getElementById('userNameDisplay').textContent = window.currentUser.userName;
+                }
+            });
+            
+            subscription.on('join', function(ctx) {
+                log('👤 User joined presence channel', ctx.info);
+                
+                // Add user to channel users list
+                if (ctx.info && ctx.info.client) {
+                    channelUsers[ctx.info.client] = {
+                        client: ctx.info.client,
+                        user: ctx.info.user || ctx.info.client
+                    };
+                    updateChannelUsersDisplay();
+                }
+            });
+            
+            subscription.on('leave', function(ctx) {
+                log('👋 User left presence channel', ctx.info);
+                
+                // Remove user from channel users list
+                if (ctx.info && ctx.info.client) {
+                    delete channelUsers[ctx.info.client];
+                    updateChannelUsersDisplay();
+                }
             });
             
             subscription.subscribe();
+            
+            // Also subscribe to individual user channel for status updates
+            const userChannel = `user:status:${userId}`;
+            const userSubscription = centrifuge.newSubscription(userChannel, {
+                getToken: async () => {
+                    return getSubscriptionToken(userChannel);
+                }
+            });
+            
+            userSubscription.on('publication', function(ctx) {
+                log('Received status update on personal channel', ctx.data);
+                
+                if (ctx.data.status) {
+                    document.getElementById('userStatus').textContent = ctx.data.status;
+                    const statusBox = document.getElementById('statusBox');
+                    statusBox.className = 'status-box ' + ctx.data.status;
+                }
+            });
+            
+            userSubscription.subscribe();
         }
         
         function disconnect() {
@@ -166,9 +376,19 @@
         }
         
         function setActive() {
-            const userId = document.getElementById('userId').value;
-            fetch(`/api/v1/presence/${userId}/active`, {
-                method: 'POST'
+            if (!window.currentUser || !window.currentUser.userID) {
+                alert('Please connect first!');
+                return;
+            }
+            
+            const userId = window.currentUser.userID;
+            const jwtToken = document.getElementById('jwtToken').value.trim();
+            
+            fetch(`http://localhost:8080/api/v1/presence/${userId}/active`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${jwtToken}`
+                }
             })
             .then(response => response.json())
             .then(data => {
@@ -179,39 +399,20 @@
             });
         }
         
-        function debugToken() {
-            const token = document.getElementById('jwtToken').value.trim();
-            
-            if (!token) {
-                alert('Please paste a JWT token first!');
+        function setInactive() {
+            if (!window.currentUser || !window.currentUser.userID) {
+                alert('Please connect first!');
                 return;
             }
             
-            fetch('/api/v1/public/token/debug', {
+            const userId = window.currentUser.userID;
+            const jwtToken = document.getElementById('jwtToken').value.trim();
+            
+            fetch(`http://localhost:8080/api/v1/presence/${userId}/inactive`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ token: token })
-            })
-            .then(response => response.json())
-            .then(data => {
-                log('Token Debug Information', data);
-                if (data.header && data.header.kid) {
-                    log('✅ Token has kid: ' + data.header.kid);
-                } else {
-                    log('❌ Token missing "kid" in header!', data.header);
+                    'Authorization': `Bearer ${jwtToken}`
                 }
-            })
-            .catch(error => {
-                log('Error debugging token', {error: error.message});
-            });
-        }
-        
-        function setInactive() {
-            const userId = document.getElementById('userId').value;
-            fetch(`/api/v1/presence/${userId}/inactive`, {
-                method: 'POST'
             })
             .then(response => response.json())
             .then(data => {

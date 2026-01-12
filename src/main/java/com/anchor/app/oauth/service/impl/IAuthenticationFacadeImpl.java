@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
 import com.anchor.app.oauth.exceptions.AuthServiceException;
 import com.anchor.app.oauth.model.User;
 import com.anchor.app.oauth.service.IAuthenticationFacade;
@@ -20,7 +19,6 @@ public class IAuthenticationFacadeImpl implements IAuthenticationFacade {
 	@Autowired
 	private UserService userService;
 	
-
 	@Override
 	public Authentication getAuthentication() {
 		return SecurityContextHolder.getContext().getAuthentication();
@@ -54,4 +52,6 @@ public class IAuthenticationFacadeImpl implements IAuthenticationFacade {
 	        return key;
 	}
 
+	
 }
+
