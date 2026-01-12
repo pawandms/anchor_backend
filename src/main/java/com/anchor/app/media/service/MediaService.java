@@ -2,7 +2,6 @@ package com.anchor.app.media.service;
 
 import com.anchor.app.dto.ErrorMsg;
 import com.anchor.app.enums.ValidationErrorType;
-import com.anchor.app.exceptions.UserServiceException;
 import com.anchor.app.media.dto.ImageInfo;
 import com.anchor.app.media.dto.StreamMediaInfo;
 import com.anchor.app.media.enums.MediaEntityType;
@@ -13,14 +12,11 @@ import com.anchor.app.media.repository.MediaRepository;
 import com.anchor.app.oauth.dto.AuthReq;
 import com.anchor.app.oauth.enums.PermissionType;
 import com.anchor.app.oauth.exceptions.AuthServiceException;
-import com.anchor.app.oauth.model.User;
 import com.anchor.app.oauth.service.AuthService;
-import com.anchor.app.oauth.service.IAuthenticationFacade;
 import com.anchor.app.util.EnvProp;
 import com.anchor.app.util.HelperBean;
 import com.anchor.app.util.enums.SequenceType;
 
-import io.minio.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,9 +44,6 @@ public class MediaService {
 
     @Autowired
     private StorageService storageService;
-
-    @Autowired
-	private IAuthenticationFacade authfacade;
 
     @Autowired
 	private AuthService authService;
@@ -169,21 +162,14 @@ public class MediaService {
                req.setMediaType(media.getType()); 
 
             
-               // Perform Authorization
-            User user = authfacade.getApiAuthenticationDetails();
-        	if( null == user)
-        	{
-        		throw new UserServiceException("Invalid authenticated user");
-        	}
-        	
-        	// perform Authorization
-			AuthReq authReq = new AuthReq(user.getId(),media.getUserId(), PermissionType.CnView);
+               // Perform Authorization - reqUserID will be populated from authenticated user in AuthService
+			AuthReq authReq = new AuthReq(null, media.getUserId(), PermissionType.CnView);
 
             boolean hasPermission = authService.hasPersmission(authReq);
 		
 		 if(!hasPermission)
 		 {
-			 throw new AuthServiceException("Invalid Perssion");
+			 throw new AuthServiceException("Invalid Permission");
 		 }
          
                InputStream mediaStream = storageService.getContenStream(media.getContentKey(), media.getS3Bucket());

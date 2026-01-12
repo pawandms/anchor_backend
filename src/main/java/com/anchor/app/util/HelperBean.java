@@ -25,8 +25,11 @@ import com.anchor.app.exceptions.UserException;
 import com.anchor.app.exceptions.ValidationException;
 import com.anchor.app.media.dto.ImageInfo;
 import com.anchor.app.media.enums.MediaType;
+import com.anchor.app.oauth.enums.UserStatusType;
+import com.anchor.app.oauth.model.User;
 import com.anchor.app.sequencer.exceptions.SequencerException;
 import com.anchor.app.sequencer.service.Sequencer;
+import com.anchor.app.users.dto.UserProfile;
 import com.anchor.app.util.enums.SequenceType;
 
 @Component
@@ -254,6 +257,40 @@ public class HelperBean {
 		    return string == null || string.isEmpty();
 		}
 
-
-		
-}
+		/**
+		 * Populate UserProfile object from User entity
+		 * This is a common utility to avoid code duplication
+		 * 
+		 * @param userProfile UserProfile object to populate
+		 * @param user User entity source
+		 */
+		public void populateUserProfile(UserProfile userProfile, User user) {
+			if (userProfile == null || user == null) {
+				logger.warn("Cannot populate UserProfile - null parameter provided");
+				return;
+			}
+			
+			userProfile.setFirstName(user.getFirstName());
+			userProfile.setLastName(user.getLastName());
+			userProfile.setUserName(user.getUserName());
+			userProfile.setNickName(user.getNickName());
+			userProfile.setEmail(user.getEmail());
+			userProfile.setMobile(user.getMobile());
+			userProfile.setGender(user.getGender());
+			userProfile.setBirthday(user.getBirthday());
+			userProfile.setSignature(user.getSignature());
+			userProfile.setAbout(user.getAbout());
+			userProfile.setFace(user.getFace());
+			userProfile.setFace200(user.getFace200());
+			userProfile.setProfileImageMediaId(user.getProfileImageMediaId());
+			userProfile.setProfileType(user.getProfileType());
+			userProfile.setStatus(user.getStatus() != null ? UserStatusType.valueOf(user.getStatus()) : UserStatusType.Unknown);
+			userProfile.setLastLogin(user.getLastLogin());
+			userProfile.setCrDate(user.getCrDate());
+			userProfile.setPrivacySettings(user.getPrivacySettings());
+			userProfile.setNotificationSettings(user.getNotificationSettings());
+			userProfile.setIsTwoStepVerificationEnabled(user.getIsTwoStepVerificationEnabled());
+			
+			logger.debug("UserProfile populated successfully for user: {}", user.getId());
+		}
+	}

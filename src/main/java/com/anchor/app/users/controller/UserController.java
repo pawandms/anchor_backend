@@ -1,6 +1,7 @@
 package com.anchor.app.users.controller;
 
 import com.anchor.app.media.dto.StreamMediaInfo;
+import com.anchor.app.users.dto.UserProfile;
 import com.anchor.app.users.service.UserService;
 
 import org.slf4j.Logger;
@@ -23,6 +24,60 @@ public class UserController {
     
     @Autowired
     private UserService userService;
+    
+    /**
+     * Upload or update user profile image
+     * 
+     * @param userId User ID
+     * @param file Profile image file
+     * @return ProfileImageResponse with upload details
+     */
+    /**
+     * Get user profile by user ID
+     * 
+     * @param userId User ID from path
+     * @param request UserProfile request object for authorization and validation
+     * @return User profile information
+     */
+    @GetMapping(value = "{userId}/profile", 
+                produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getUserProfile(
+            @PathVariable String userId) 
+        {
+                ResponseEntity<?> response = null;
+                UserProfile req = null;
+        try {
+            logger.info("Fetching user profile for userId: {}", userId);
+            
+            req = new UserProfile();
+            req.setId(userId);
+            
+            userService.getUserProfileById(req);
+            
+            if(req.isValid())
+            {
+              response =  ResponseEntity.status(HttpStatus.OK).body(req);      
+            }   
+
+           
+            
+        } catch (Exception e) {
+            if(!req.getErrors().isEmpty())
+            {
+               response =  ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "success", false,
+                "message", "Validation failed",
+                "errors", req.getErrors()
+            ));
+            }
+            else {
+                response =  new ResponseEntity<>("get User Profile Error Msg:"+e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);	
+            }
+        
+        }
+
+        return response;
+    }
     
     /**
      * Upload or update user profile image
@@ -70,6 +125,7 @@ public class UserController {
 
         return response;
     }
+    
     
     
     

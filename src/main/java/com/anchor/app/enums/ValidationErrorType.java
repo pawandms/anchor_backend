@@ -5,6 +5,7 @@ import java.util.Map;
 
 public enum ValidationErrorType {
 	Invalid_UserName("invalid username"),
+	Invalid_UserId("Invalid userId"),
 	Invalid_Password("invalid password"),
 	Invalid_Email("invalid email"),
 	Invalid_FName("invalid first name"),
@@ -34,6 +35,7 @@ public enum ValidationErrorType {
 	Permission_Error("InvalidPermission"),
 	Invalid_Request("Invalid_Request"),
 	Add_User_Block("Add_User_Block"),
+
 	;
 	
 	private String value;

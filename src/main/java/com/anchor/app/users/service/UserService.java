@@ -6,8 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.multipart.MultipartFile;
-
 import com.anchor.app.dto.ErrorMsg;
 import com.anchor.app.enums.ValidationErrorType;
 import com.anchor.app.exceptions.UserServiceException;
@@ -25,8 +23,8 @@ import com.anchor.app.oauth.model.User;
 import com.anchor.app.oauth.model.UserAuth;
 import com.anchor.app.oauth.model.UserVerifyToken;
 import com.anchor.app.oauth.service.AuthService;
-import com.anchor.app.oauth.service.IAuthenticationFacade;
 import com.anchor.app.users.dto.SignUpRequest;
+import com.anchor.app.users.dto.UserProfile;
 import com.anchor.app.users.enums.UserRoleType;
 import com.anchor.app.users.repository.UserAuthRepository;
 import com.anchor.app.users.repository.UserRepository;
@@ -56,9 +54,6 @@ public class UserService {
     
     @Autowired
     private HelperBean helperBean;
-
-    @Autowired
-	private IAuthenticationFacade authfacade;
 
     @Autowired
 	private AuthService authService;
@@ -205,7 +200,7 @@ public class UserService {
                 .email(request.getEmail())
                 .mobile(request.getMobile())
                 .admin(false)
-                .status(2) // Normal user
+                .status(com.anchor.app.oauth.enums.UserStatusType.Normal.getValue()) // Normal user
                 .profileType(request.getProfileType())
                 .isTwoStepVerificationEnabled(false)
                 .crUser(userId)
@@ -286,6 +281,63 @@ public class UserService {
     
 
     
+	/**
+     * Get user profile by user ID with authorization and validation
+     * 
+     * @param request UserProfile request object containing userId and other validation data
+     * @return UserProfile or null if not found
+     * @throws UserServiceException if error occurs
+     */
+    public void getUserProfileById(UserProfile request) throws UserServiceException {
+        try {
+            request.setValid(true);
+            
+            // Validate user ID
+            if (request.getId() == null || request.getId().isEmpty()) {
+                request.setValid(false);
+                request.getErrors().add(new ErrorMsg(
+                    ValidationErrorType.Invalid_Request.name(),
+                    "userId",
+                    "User ID cannot be null or empty"
+                ));
+                return;
+            }
+            
+            // Check permissions - reqUserID will be populated from authenticated user in AuthService
+            AuthReq authReq = new AuthReq(null, request.getId(), PermissionType.UsrView);
+            boolean hasPermission = authService.hasPersmission(authReq);
+            
+            if(!hasPermission)
+		    {
+			 throw new AuthServiceException("Invalid Permission");
+		    }    
+            
+            // Fetch user profile
+            Optional<User> userOpt = userRepository.findById(request.getId());
+            
+            if (userOpt.isPresent()) {
+                logger.info("User profile found for userId: {}", request.getId());
+                User user = userOpt.get();
+                
+                // Populate request object with user data using helper method
+                helperBean.populateUserProfile(request, user);
+                
+            } else {
+                logger.warn("User profile not found for userId: {}", request.getId());
+                request.setValid(false);
+                request.getErrors().add(new ErrorMsg(
+                    ValidationErrorType.Invalid_UserId.name(),
+                    "userId",
+                    "User not found with ID: " + request.getId()
+                ));
+            }
+            
+        } catch (Exception e) {
+            logger.error("Error fetching user profile for userId: {}", request.getId(), e);
+            throw new UserServiceException("Failed to fetch user profile: " + e.getMessage(), e);
+        }
+    }
+    
 	public User getUserDetails(String userName) throws UserServiceException {
 			
 		User user = null;
@@ -340,24 +392,22 @@ public class UserService {
         String mediaId = null;
         try{
             req.setValid(true);
-            // Perform Authorization
-            User user = authfacade.getApiAuthenticationDetails();
-        	if( null == user)
-        	{
-        		throw new UserServiceException("Invalid authenticated user");
-        	}
-        	
-        	// perform Authorization
-			AuthReq authReq = new AuthReq(user.getId(),req.getUserID(), PermissionType.UsrEdit);
+            
+           // Perform Authorization - reqUserID will be populated from authenticated user in AuthService
+			AuthReq authReq = new AuthReq(null, req.getUserID(), PermissionType.UsrEdit);
 
             boolean hasPermission = authService.hasPersmission(authReq);
 		
 		 if(!hasPermission)
 		 {
-			 throw new AuthServiceException("Invalid Perssion");
+			 throw new AuthServiceException("Invalid Permission");
 		 }
          
-         mediaId = user.getProfileImageMediaId();
+         // Get existing media ID from user profile
+         Optional<User> userOpt = userRepository.findById(req.getUserID());
+         if (userOpt.isPresent()) {
+             mediaId = userOpt.get().getProfileImageMediaId();
+         }
          
          Media media = mediaService.saveUserProfileImage(req.getUserID(), mediaId, req.getInputFile());
 

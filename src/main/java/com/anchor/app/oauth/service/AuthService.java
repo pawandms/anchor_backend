@@ -4,11 +4,13 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.anchor.app.oauth.dto.AuthReq;
 import com.anchor.app.oauth.enums.AuthUserRoleType;
 import com.anchor.app.oauth.exceptions.AuthServiceException;
+import com.anchor.app.oauth.model.User;
 
 
 @Service
@@ -16,13 +18,27 @@ public class AuthService  {
 
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+	@Autowired
+	private IAuthenticationFacade authfacade;
+
 	
 	public boolean hasPersmission(AuthReq authReq) throws AuthServiceException {
 		boolean result = false;
 		try {
-			if(( null == authReq.getUserID())
+			// If reqUserID (requesting user) is null, get it from authenticated user
+			if (authReq.getReqUserID() == null) {
+				User authenticatedUser = authfacade.getApiAuthenticationDetails();
+				if (authenticatedUser == null) {
+					throw new AuthServiceException("User is not authenticated");
+				}
+				authReq.setReqUserID(authenticatedUser.getId());
+				logger.debug("Populated reqUserID from authenticated user: {}", authenticatedUser.getId());
+			}
+			
+			if(
+				//( null == authReq.getUserID())
 			  //|| (null == authReq.getChnlID())
-			  || (null == authReq.getReqPermission())
+			   (null == authReq.getReqPermission())
 			 // || (null == authReq.getReqUserRoles())
 			  //|| (authReq.getReqUserRoles().isEmpty())
 				)
@@ -162,7 +178,11 @@ public class AuthService  {
 				break;
 				
 			case UsrView:
-				if((authReq.getReqUserRoles().contains(AuthUserRoleType.SuperAdmin))
+				if(authReq.getReqUserID().equalsIgnoreCase(authReq.getUserID()))
+				{
+					result = true;
+				}
+				else if((authReq.getReqUserRoles().contains(AuthUserRoleType.SuperAdmin))
 						|| (authReq.getReqUserRoles().contains(AuthUserRoleType.Admin))
 						|| (authReq.getReqUserRoles().contains(AuthUserRoleType.Author))
 						|| (authReq.getReqUserRoles().contains(AuthUserRoleType.Moderator))

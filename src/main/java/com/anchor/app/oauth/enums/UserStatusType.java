@@ -9,7 +9,9 @@ public enum UserStatusType {
 	Forbidden(3),
 	Virtual(4),
 	Operation(5),
-	Unverfieid(6);
+	Unverfieid(6),
+    Unknown(0),
+    ;
 	
 	
 	private int value;
@@ -30,6 +32,16 @@ public enum UserStatusType {
     
     public static UserStatusType getType(String type) {
         return (UserStatusType) map.get(type);
+    }
+
+    /**
+     * Get UserStatusType from integer value
+     * 
+     * @param value Integer status value
+     * @return UserStatusType enum or null if not found
+     */
+    public static UserStatusType valueOf(Integer value) {
+        return value != null ? map.get(value) : null;
     }
 
     
