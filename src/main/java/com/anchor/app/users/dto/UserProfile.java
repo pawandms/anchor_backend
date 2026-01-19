@@ -1,13 +1,12 @@
 package com.anchor.app.users.dto;
 
-import java.io.Serializable;
 import java.util.Date;
-import java.util.Map;
-
 import com.anchor.app.dto.BaseVo;
+import com.anchor.app.oauth.enums.GenderType;
 import com.anchor.app.oauth.enums.UserStatusType;
 import com.anchor.app.oauth.enums.VisibilityType;
 import com.anchor.app.oauth.model.User;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import lombok.AllArgsConstructor;
@@ -34,8 +33,11 @@ public class UserProfile  extends BaseVo {
     private String nickName;
     private String email;
     private String mobile;
-    private String gender;
-    private Long birthday;
+    private GenderType gender;
+    
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private Date dob;
+    
     private String signature;
     private String about;
     private String face;
@@ -45,8 +47,8 @@ public class UserProfile  extends BaseVo {
     private UserStatusType status;
     private Date lastLogin;
     private Date crDate;
-    private Map<String, Object> privacySettings;
-    private Map<String, Object> notificationSettings;
+    private UserPrivacy privacySettings;
+    private UserNotification notificationSettings;
     private Boolean isTwoStepVerificationEnabled;
     
     /**
@@ -69,7 +71,7 @@ public class UserProfile  extends BaseVo {
                 .email(user.getEmail())
                 .mobile(user.getMobile())
                 .gender(user.getGender())
-                .birthday(user.getBirthday())
+                .dob(user.getDob())
                 .signature(user.getSignature())
                 .about(user.getAbout())
                 .face(user.getFace())

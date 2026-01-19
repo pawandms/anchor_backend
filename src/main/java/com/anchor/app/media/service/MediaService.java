@@ -163,7 +163,8 @@ public class MediaService {
 
             
                // Perform Authorization - reqUserID will be populated from authenticated user in AuthService
-			AuthReq authReq = new AuthReq(null, media.getUserId(), PermissionType.CnView);
+			//  TODO : Disblae Auth Validation 
+               AuthReq authReq = new AuthReq(req.getUserID(), media.getUserId(), PermissionType.CnView);
 
             boolean hasPermission = authService.hasPersmission(authReq);
 		

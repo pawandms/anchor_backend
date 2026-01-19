@@ -8,6 +8,7 @@ public enum ValidationErrorType {
 	Invalid_UserId("Invalid userId"),
 	Invalid_Password("invalid password"),
 	Invalid_Email("invalid email"),
+	Invalid_Mobile("invalid mobile"),
 	Invalid_FName("invalid first name"),
 	Invalid_LName("invalid last name"),
 	Invalid_Media_ID("invalid ImediaID"),

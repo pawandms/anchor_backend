@@ -29,7 +29,10 @@ import com.anchor.app.oauth.enums.UserStatusType;
 import com.anchor.app.oauth.model.User;
 import com.anchor.app.sequencer.exceptions.SequencerException;
 import com.anchor.app.sequencer.service.Sequencer;
+import com.anchor.app.users.dto.UserNotification;
+import com.anchor.app.users.dto.UserPrivacy;
 import com.anchor.app.users.dto.UserProfile;
+import com.anchor.app.users.enums.UserPrivacyType;
 import com.anchor.app.util.enums.SequenceType;
 
 @Component
@@ -277,7 +280,7 @@ public class HelperBean {
 			userProfile.setEmail(user.getEmail());
 			userProfile.setMobile(user.getMobile());
 			userProfile.setGender(user.getGender());
-			userProfile.setBirthday(user.getBirthday());
+			userProfile.setDob(user.getDob());
 			userProfile.setSignature(user.getSignature());
 			userProfile.setAbout(user.getAbout());
 			userProfile.setFace(user.getFace());
@@ -292,5 +295,30 @@ public class HelperBean {
 			userProfile.setIsTwoStepVerificationEnabled(user.getIsTwoStepVerificationEnabled());
 			
 			logger.debug("UserProfile populated successfully for user: {}", user.getId());
+		}
+
+		public UserNotification getDefaultUserNotification()
+		{
+			UserNotification result = UserNotification.builder()
+			.callNotificaiton(true)
+			.groupNotificaiton(true)
+			.msgNotification(true)
+			.statusNotification(true)
+			.build();
+
+			return result;
+		}
+
+		public UserPrivacy getDefaultUserPrivecy()
+		{
+			UserPrivacy result = UserPrivacy.builder()
+								.callVisibility(UserPrivacyType.EveryOne)
+								.lastSeen(UserPrivacyType.EveryOne)
+								.profileVisiblity(UserPrivacyType.EveryOne)
+								.readReceipts(true)
+								.statusVisibility(UserPrivacyType.EveryOne)
+								.build();
+
+			return result;					
 		}
 	}

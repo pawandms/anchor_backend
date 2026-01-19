@@ -1,8 +1,12 @@
 package com.anchor.app.users.dto;
 
+import java.util.Date;
+
 import com.anchor.app.dto.BaseVo;
+import com.anchor.app.oauth.enums.GenderType;
 import com.anchor.app.oauth.enums.VisibilityType;
 import com.anchor.app.users.enums.UserRoleType;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -43,8 +47,16 @@ public class SignUpRequest extends BaseVo {
 
     private UserRoleType role;
     
+    //Optional 
     private VisibilityType profileType;
     
+    //Optional 
+    private GenderType gender;
+    
+    //Optional 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private Date dob;
+
     // Response fields (populated by service)
     private String userId;
     private String verificationToken;

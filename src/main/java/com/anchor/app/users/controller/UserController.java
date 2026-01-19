@@ -96,6 +96,7 @@ public class UserController {
           ResponseEntity<?> response = null;
           StreamMediaInfo req = null;
         try {
+            req = new StreamMediaInfo();
             req.setUserID(userId);
             req.setInputFile(file);
             
@@ -125,8 +126,5 @@ public class UserController {
 
         return response;
     }
-    
-    
-    
     
 }

@@ -6,12 +6,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.anchor.app.dto.BaseVo;
 import com.anchor.app.media.enums.MediaType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 
 public class StreamMediaInfo extends BaseVo {
 
     String mediaId;
     String userID;
+    @JsonIgnore
     MultipartFile inputFile;
     InputStream mediaStream;
     MediaType mediaType;

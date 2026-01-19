@@ -2,14 +2,17 @@ package com.anchor.app.oauth.model;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.Map;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.TextIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import com.anchor.app.oauth.enums.GenderType;
 import com.anchor.app.oauth.enums.VisibilityType;
+import com.anchor.app.users.dto.UserNotification;
+import com.anchor.app.users.dto.UserPrivacy;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -42,9 +45,10 @@ public class User implements Serializable {
     //Is it super administrator
     private boolean admin;
     //Gender
-    private String gender;
+    private GenderType gender;
     //Birthday
-    private Long birthday;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private Date dob;
     //Personal signature
     private String signature;
     //email
@@ -78,8 +82,8 @@ public class User implements Serializable {
 	
 	private String about;
     private String publicKey;
-    private Map<String, Object> privacySettings;
-    private Map<String, Object> notificationSettings;
+    private UserPrivacy privacySettings;
+    private UserNotification notificationSettings;
     private Boolean isTwoStepVerificationEnabled;
    
 

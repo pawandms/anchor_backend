@@ -14,6 +14,7 @@ import com.anchor.app.media.dto.StreamMediaInfo;
 import com.anchor.app.media.model.Media;
 import com.anchor.app.media.service.MediaService;
 import com.anchor.app.oauth.dto.AuthReq;
+import com.anchor.app.oauth.enums.GenderType;
 import com.anchor.app.oauth.enums.PermissionType;
 import com.anchor.app.oauth.enums.UserIdentifyType;
 import com.anchor.app.oauth.enums.VisibilityType;
@@ -88,6 +89,11 @@ public class UserService {
             if (request.getProfileType() == null) {
                 request.setProfileType(VisibilityType.Public);
             }
+
+            if( null == request.getGender())
+            {
+                request.setGender(GenderType.Unknown);
+            }    
        
         } catch (Exception e) {
             logger.error("Error during structural validation: {}", e.getMessage(), e);
@@ -124,7 +130,7 @@ public class UserService {
                 if (userRepository.existsByMobile(request.getMobile())) {
                     logger.warn("Registration failed - mobile already exists: {}", request.getMobile());
                     request.setValid(false);
-                    request.getErrors().add(new ErrorMsg("MOBILE_EXISTS", "mobile", request.getMobile()));
+                    request.getErrors().add(new ErrorMsg(ValidationErrorType.Invalid_Mobile.name(), "mobile", request.getMobile()));
                 }
             }
         } catch (Exception e) {
@@ -199,10 +205,14 @@ public class UserService {
                 .userName(userName)
                 .email(request.getEmail())
                 .mobile(request.getMobile())
+                .gender(request.getGender())
+                .dob(request.getDob())
                 .admin(false)
                 .status(com.anchor.app.oauth.enums.UserStatusType.Normal.getValue()) // Normal user
                 .profileType(request.getProfileType())
                 .isTwoStepVerificationEnabled(false)
+                .notificationSettings(helperBean.getDefaultUserNotification())
+                .privacySettings(helperBean.getDefaultUserPrivecy())
                 .crUser(userId)
                 .crDate(now)
                 .modUser(userId)
@@ -414,6 +424,7 @@ public class UserService {
          // Update User Object for ProfileImageID
          updateProfileImageMediaId(req.getUserID(), media.getId());
          req.setMediaId(media.getId());
+         req.setMediaType(media.getType());
          
 			
         }
