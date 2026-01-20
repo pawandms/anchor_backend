@@ -110,7 +110,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{   \n    \"firstName\" : \"Admin\",\n    \"lastName\": \"Admin\",\n    \"email\": \"admin@anchor.msg.app\",\n    \"password\": \"Mumbai@123\",\n    \"mobile\": \"0000000000\"\n}",
+							"raw": "{   \n    \"firstName\" : \"Pawan\",\n    \"lastName\": \"Suryawanshi\",\n    \"email\": \"pawan@anchor.msg.app\",\n    \"password\": \"Mumbai@123\",\n    \"mobile\": \"9922901401\",\n    \"dob\": \"1979-05-13\",\n    \"gender\" : \"Male\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -129,6 +129,582 @@
 								"v1",
 								"public",
 								"signup"
+							]
+						},
+						"description": "Register a new user with required fields (firstName, lastName, email, password) and optional fields (userName, mobile). Returns userId and verificationToken on success."
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"password\": \"SecurePass123\",\n    \"userName\": \"johndoe\",\n    \"mobile\": \"+1234567890\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/public/signup",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"public",
+										"signup"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"password\": \"SecurePass123\",\n    \"userName\": \"johndoe\",\n    \"mobile\": \"+1234567890\",\n    \"userId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"verificationToken\": \"f1e2d3c4-b5a6-7890-cdef-1234567890ab\",\n    \"valid\": true,\n    \"errorMessage\": \"User registered successfully. Please verify your email.\",\n    \"errors\": []\n}"
+						},
+						{
+							"name": "Validation Error",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"firstName\": \"\",\n    \"lastName\": \"Doe\",\n    \"email\": \"invalid-email\",\n    \"password\": \"short\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/public/signup",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"public",
+										"signup"
+									]
+								}
+							},
+							"status": "Conflict",
+							"code": 409,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"firstName\": \"First name is required\",\n    \"email\": \"Please provide a valid email address\",\n    \"password\": \"Password must be at least 8 characters\"\n}"
+						},
+						{
+							"name": "Email Already Exists",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"existing@example.com\",\n    \"password\": \"SecurePass123\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/public/signup",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"public",
+										"signup"
+									]
+								}
+							},
+							"status": "Conflict",
+							"code": 409,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"email\": \"Email already registered in the system\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Update User Info",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{X-AUTH-TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"Pawan1\",\n  \"lastName\": \"Suryawanshi1\",\n  \"nickName\": \"Rocky\",\n  \"mobile\": \"9999999999\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{PROTOCOL}}://{{BASE_URL}}:{{PORT}}/api/v1/users/:userId/user-info",
+							"protocol": "{{PROTOCOL}}",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"port": "{{PORT}}",
+							"path": [
+								"api",
+								"v1",
+								"users",
+								":userId",
+								"user-info"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "2026-0-3500",
+									"description": "Pawan"
+								}
+							]
+						},
+						"description": "Register a new user with required fields (firstName, lastName, email, password) and optional fields (userName, mobile). Returns userId and verificationToken on success."
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"password\": \"SecurePass123\",\n    \"userName\": \"johndoe\",\n    \"mobile\": \"+1234567890\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/public/signup",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"public",
+										"signup"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"password\": \"SecurePass123\",\n    \"userName\": \"johndoe\",\n    \"mobile\": \"+1234567890\",\n    \"userId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"verificationToken\": \"f1e2d3c4-b5a6-7890-cdef-1234567890ab\",\n    \"valid\": true,\n    \"errorMessage\": \"User registered successfully. Please verify your email.\",\n    \"errors\": []\n}"
+						},
+						{
+							"name": "Validation Error",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"firstName\": \"\",\n    \"lastName\": \"Doe\",\n    \"email\": \"invalid-email\",\n    \"password\": \"short\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/public/signup",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"public",
+										"signup"
+									]
+								}
+							},
+							"status": "Conflict",
+							"code": 409,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"firstName\": \"First name is required\",\n    \"email\": \"Please provide a valid email address\",\n    \"password\": \"Password must be at least 8 characters\"\n}"
+						},
+						{
+							"name": "Email Already Exists",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"existing@example.com\",\n    \"password\": \"SecurePass123\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/public/signup",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"public",
+										"signup"
+									]
+								}
+							},
+							"status": "Conflict",
+							"code": 409,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"email\": \"Email already registered in the system\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Update User Privacy Setting",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{X-AUTH-TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{   \n   \"lastSeen\": \"EveryOne\",\n  \"profileVisiblity\": \"Contacts\",\n  \"statusVisibility\": \"NoBody\",\n  \"readReceipts\": true,\n  \"callVisibility\": \"EveryOne\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{PROTOCOL}}://{{BASE_URL}}:{{PORT}}/api/v1/users/:userId/privacy-settings",
+							"protocol": "{{PROTOCOL}}",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"port": "{{PORT}}",
+							"path": [
+								"api",
+								"v1",
+								"users",
+								":userId",
+								"privacy-settings"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "2026-0-3500",
+									"description": "Pawan"
+								}
+							]
+						},
+						"description": "Register a new user with required fields (firstName, lastName, email, password) and optional fields (userName, mobile). Returns userId and verificationToken on success."
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"password\": \"SecurePass123\",\n    \"userName\": \"johndoe\",\n    \"mobile\": \"+1234567890\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/public/signup",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"public",
+										"signup"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"password\": \"SecurePass123\",\n    \"userName\": \"johndoe\",\n    \"mobile\": \"+1234567890\",\n    \"userId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"verificationToken\": \"f1e2d3c4-b5a6-7890-cdef-1234567890ab\",\n    \"valid\": true,\n    \"errorMessage\": \"User registered successfully. Please verify your email.\",\n    \"errors\": []\n}"
+						},
+						{
+							"name": "Validation Error",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"firstName\": \"\",\n    \"lastName\": \"Doe\",\n    \"email\": \"invalid-email\",\n    \"password\": \"short\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/public/signup",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"public",
+										"signup"
+									]
+								}
+							},
+							"status": "Conflict",
+							"code": 409,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"firstName\": \"First name is required\",\n    \"email\": \"Please provide a valid email address\",\n    \"password\": \"Password must be at least 8 characters\"\n}"
+						},
+						{
+							"name": "Email Already Exists",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"existing@example.com\",\n    \"password\": \"SecurePass123\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/public/signup",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"public",
+										"signup"
+									]
+								}
+							},
+							"status": "Conflict",
+							"code": 409,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"email\": \"Email already registered in the system\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Update User Notification Setting",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{X-AUTH-TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"msgNotification\": true,\n  \"groupNotificaiton\": true,\n  \"callNotificaiton\": false,\n  \"statusNotification\": false\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{PROTOCOL}}://{{BASE_URL}}:{{PORT}}/api/v1/users/:userId/notification-settings",
+							"protocol": "{{PROTOCOL}}",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"port": "{{PORT}}",
+							"path": [
+								"api",
+								"v1",
+								"users",
+								":userId",
+								"notification-settings"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "2026-0-3500",
+									"description": "Pawan"
+								}
 							]
 						},
 						"description": "Register a new user with required fields (firstName, lastName, email, password) and optional fields (userName, mobile). Returns userId and verificationToken on success."
@@ -299,7 +875,7 @@
 								{
 									"key": "file",
 									"type": "file",
-									"src": "/C:/Users/Pawan Suryawanshi/Pictures/User5.jpg"
+									"src": "/C:/Users/Pawan Suryawanshi/Pictures/User3.jpg"
 								}
 							]
 						},
@@ -321,7 +897,7 @@
 							"variable": [
 								{
 									"key": "userId",
-									"value": "2026-0-2000"
+									"value": "2026-0-3500"
 								}
 							]
 						},
@@ -582,10 +1158,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/v1/users/:userId/profile",
+							"raw": "{{PROTOCOL}}://{{BASE_URL}}:{{PORT}}/api/v1/users/:userId/profile",
+							"protocol": "{{PROTOCOL}}",
 							"host": [
-								"{{baseUrl}}"
+								"{{BASE_URL}}"
 							],
+							"port": "{{PORT}}",
 							"path": [
 								"api",
 								"v1",
@@ -596,7 +1174,7 @@
 							"variable": [
 								{
 									"key": "userId",
-									"value": "2026-0-2000"
+									"value": "2026-0-3500"
 								}
 							]
 						},
@@ -750,7 +1328,7 @@
 							"variable": [
 								{
 									"key": "mediaId",
-									"value": "2026-0-1500"
+									"value": "2026-0-2000"
 								}
 							]
 						}
