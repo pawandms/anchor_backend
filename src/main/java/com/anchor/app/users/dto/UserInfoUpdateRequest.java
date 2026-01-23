@@ -4,6 +4,7 @@ import org.springframework.data.annotation.Transient;
 
 import com.anchor.app.dto.BaseVo;
 import com.anchor.app.oauth.model.User;
+import com.anchor.app.users.enums.UserLanguageType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.AllArgsConstructor;
@@ -24,7 +25,8 @@ public class UserInfoUpdateRequest extends BaseVo {
     private String nickName;
     private String mobile;
     private String email;
-    
+    private UserLanguageType userLanguage;
+
     @Transient
     @JsonIgnore
     private User currentUser; // Fetched user object to avoid multiple DB calls

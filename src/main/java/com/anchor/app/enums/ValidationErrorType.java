@@ -18,6 +18,7 @@ public enum ValidationErrorType {
 	Invalid_Verificaiton_Token("invalid VerificationToken"),
 	UserName_Already_Taken("Username already present"),
 	Email_Already_Present("Email already present"),
+	Mobile_Already_Present("Mobile already present"),
 	Invalid_Channel_Name("invalid ChannelName"),
 	Invalid_Channel_Type("invalid ChannelType"),
 	Invalid_Channel_Visibility("invalid ChannelVisibility"),
@@ -38,31 +39,26 @@ public enum ValidationErrorType {
 	Add_User_Block("Add_User_Block"),
 
 	;
-	
+
 	private String value;
-    private static Map<String, ValidationErrorType> map = new HashMap<String, ValidationErrorType>();
+	private static Map<String, ValidationErrorType> map = new HashMap<String, ValidationErrorType>();
 
-	
-    private ValidationErrorType(String value )
-    {
-    this.value =value;	
-    }
-    
-    static {
-        for (ValidationErrorType type : ValidationErrorType.values()) {
-            map.put(type.value, type);
-        }
-    }
-    
-    
-    public static ValidationErrorType getType(String type) {
-        return (ValidationErrorType) map.get(type);
-    }
+	private ValidationErrorType(String value) {
+		this.value = value;
+	}
 
-    
-    public String getValue() {
-        return value;
-    }
+	static {
+		for (ValidationErrorType type : ValidationErrorType.values()) {
+			map.put(type.value, type);
+		}
+	}
 
+	public static ValidationErrorType getType(String type) {
+		return (ValidationErrorType) map.get(type);
+	}
+
+	public String getValue() {
+		return value;
+	}
 
 }

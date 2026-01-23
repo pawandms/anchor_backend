@@ -32,6 +32,7 @@ import com.anchor.app.sequencer.service.Sequencer;
 import com.anchor.app.users.dto.UserNotification;
 import com.anchor.app.users.dto.UserPrivacy;
 import com.anchor.app.users.dto.UserProfile;
+import com.anchor.app.users.enums.UserLanguageType;
 import com.anchor.app.users.enums.UserPrivacyType;
 import com.anchor.app.util.enums.SequenceType;
 
@@ -39,286 +40,241 @@ import com.anchor.app.util.enums.SequenceType;
 @Scope("singleton")
 public class HelperBean {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	@Autowired
-    PasswordEncoder passwordEncoder;
+	PasswordEncoder passwordEncoder;
 
+	public String getSequanceNo(SequenceType type) throws SequencerException {
+		String seqStr = null;
+		Sequencer seq = Sequencer.getInstance(type.name());
 
-    	    public String getSequanceNo(SequenceType type) throws SequencerException
-	    {
-	    	String seqStr = null;
-	    	Sequencer seq = Sequencer.getInstance(type.name());
-	    	
-	    	Long seqNo = seq.next();
-	    	if (seqNo.equals(Long.valueOf(0)))
-			{
-	    		seqNo = seq.next();
-			}
-	    	
-	    	int year = Calendar.getInstance().get(Calendar.YEAR);
-			int month = Calendar.getInstance().get(Calendar.MONTH);
-	    	seqStr = year+"-"+month+"-"+String.valueOf(seqNo);
-	    	
-	    	return seqStr;
-	    }
-
-		public Long getSequanceNoLong(SequenceType type) throws SequencerException
-	    {
-	    	Long seqNo = null;
-	    	Sequencer seq = Sequencer.getInstance(type.name());
-	    	
-	    	seqNo = seq.next();
-	    	if (seqNo.equals(Long.valueOf(0)))
-			{
-	    		seqNo = seq.next();
-			}
-	    	
-	    	
-	    	return seqNo;
-	    }
-
-		
-		public String encriptPassword(String plainTxt) throws UserException
-		{
-			String encriptedTxt = null;
-			if( null == plainTxt)
-			{
-				throw new UserException("Empty Password not allowed");
-				
-			}
-			encriptedTxt = 	passwordEncoder.encode(plainTxt);
-			
-			return encriptedTxt;
+		Long seqNo = seq.next();
+		if (seqNo.equals(Long.valueOf(0))) {
+			seqNo = seq.next();
 		}
 
-		public UUID getUUIDFromString(String value)
-		{
-			UUID result = null;
-			try {
-				result =  UUID.nameUUIDFromBytes(value.getBytes("UTF-8"));
-			} catch (UnsupportedEncodingException e) {
-			
-				result = UUID.randomUUID();
-			}
-			
-			return result;
+		int year = Calendar.getInstance().get(Calendar.YEAR);
+		int month = Calendar.getInstance().get(Calendar.MONTH);
+		seqStr = year + "-" + month + "-" + String.valueOf(seqNo);
+
+		return seqStr;
+	}
+
+	public Long getSequanceNoLong(SequenceType type) throws SequencerException {
+		Long seqNo = null;
+		Sequencer seq = Sequencer.getInstance(type.name());
+
+		seqNo = seq.next();
+		if (seqNo.equals(Long.valueOf(0))) {
+			seqNo = seq.next();
 		}
 
-		public Date getInfiniteDate()
-		{
-			Date result = null;
-			try {
-				String sDate1="31/12/9999";  
-				result = new SimpleDateFormat("dd/MM/yyyy").parse(sDate1); 
-					
-			}
-			catch(Exception e)
-			{
-			// Swallow exception	
-			}
-			
-			return result;
+		return seqNo;
+	}
+
+	public String encriptPassword(String plainTxt) throws UserException {
+		String encriptedTxt = null;
+		if (null == plainTxt) {
+			throw new UserException("Empty Password not allowed");
+
+		}
+		encriptedTxt = passwordEncoder.encode(plainTxt);
+
+		return encriptedTxt;
+	}
+
+	public UUID getUUIDFromString(String value) {
+		UUID result = null;
+		try {
+			result = UUID.nameUUIDFromBytes(value.getBytes("UTF-8"));
+		} catch (UnsupportedEncodingException e) {
+
+			result = UUID.randomUUID();
 		}
 
-		  public String getFileNameExtension(String fileName) throws ValidationException
-		  {
-			  String extension = null;
-			  try {
-				  extension = FilenameUtils.getExtension(fileName);
-			  }
-			  catch(Exception e)
-			  {
-				  throw new ValidationException(e.getMessage(), e);
-			  }
-			  
-			  return extension;
-		  }
-		  
-		  public String getFileNameOnly(String fileName) throws ValidationException
-		  {
-			  String name = null;
-			  try {
-				  name = FilenameUtils.getBaseName(fileName);
-			  }
-			  catch(Exception e)
-			  {
-				  throw new ValidationException(e.getMessage(), e);
-			  }
-			  
-			  return name;
-		  }
-		
+		return result;
+	}
 
-		  public MediaType getMediaTypeByExtension(String extension) throws ValidationException
-		  {
-			  MediaType type = null;
-			  try {
-				  	if((extension.equalsIgnoreCase("jpg"))
-				  		||(extension.equalsIgnoreCase("jpeg"))	
-				  		||(extension.equalsIgnoreCase("png"))
-				  		||(extension.equalsIgnoreCase("gif"))
-				    )
-				  	{
-				  		type = MediaType.Image_JPEG;
-				  	}
-					else if(extension.equalsIgnoreCase("png"))
-				  	{
-				  		type = MediaType.Image_PNG;
-				  	} 
-					else if(extension.equalsIgnoreCase("gif"))
-				  	{
-				  		type = MediaType.Image_GIF;
-				  	} 
-				  	else if((extension.equalsIgnoreCase("mp4"))
-					  	)
-				  	{
-				  		type = MediaType.Video;
-				  	}
-				  	else if((extension.equalsIgnoreCase("hls"))
-						  	)
-					  	{
-					  		type = MediaType.HlsVideo;
-					  	}
-				  	else if((extension.equalsIgnoreCase("mp3"))
-						  	)
-					  	{
-					  		type = MediaType.Audio;
-					  	}
-				  	else if((extension.equalsIgnoreCase("doc"))
-					  		||(extension.equalsIgnoreCase("docx"))	
-					  		||(extension.equalsIgnoreCase("xlsx"))
-					  		||(extension.equalsIgnoreCase("pdf"))
-					    )
-					  	{
-					  		type = MediaType.Document;
-					  	}
-				  	else {
-				  		type = MediaType.Invalid;
-				  	}
-				  	
-			  }
-			  catch(Exception e)
-			  {
-				  throw new ValidationException(e.getMessage(), e);
-			  }
-			  
-			  return type;
-		  }
+	public Date getInfiniteDate() {
+		Date result = null;
+		try {
+			String sDate1 = "31/12/9999";
+			result = new SimpleDateFormat("dd/MM/yyyy").parse(sDate1);
 
-		  /**
-		   * Get image dimensions without loading entire image into memory
-		   * This method reads only the image header/metadata for efficient processing
-		   * 
-		   * @param inputStream InputStream of the image file
-		   * @return ImageInfo object containing width and height, or null if unable to read
-		   */
-		  public ImageInfo getImageInfo(String fullFileName, InputStream inputStream) 
-		  {
-			ImageInfo imageInfo = new ImageInfo();
-			ImageReader reader = null;
-			try{
-					String name = getFileNameOnly(fullFileName);
-					String extension = getFileNameExtension(fullFileName);
+		} catch (Exception e) {
+			// Swallow exception
+		}
 
-					imageInfo.setName(name);
-					imageInfo.setExtn(extension);
+		return result;
+	}
 
-				ImageInputStream iis = ImageIO.createImageInputStream(inputStream);
-				if( null != iis)
-				{
+	public String getFileNameExtension(String fileName) throws ValidationException {
+		String extension = null;
+		try {
+			extension = FilenameUtils.getExtension(fileName);
+		} catch (Exception e) {
+			throw new ValidationException(e.getMessage(), e);
+		}
+
+		return extension;
+	}
+
+	public String getFileNameOnly(String fileName) throws ValidationException {
+		String name = null;
+		try {
+			name = FilenameUtils.getBaseName(fileName);
+		} catch (Exception e) {
+			throw new ValidationException(e.getMessage(), e);
+		}
+
+		return name;
+	}
+
+	public MediaType getMediaTypeByExtension(String extension) throws ValidationException {
+		MediaType type = null;
+		try {
+			if ((extension.equalsIgnoreCase("jpg"))
+					|| (extension.equalsIgnoreCase("jpeg"))
+					|| (extension.equalsIgnoreCase("png"))
+					|| (extension.equalsIgnoreCase("gif"))) {
+				type = MediaType.Image_JPEG;
+			} else if (extension.equalsIgnoreCase("png")) {
+				type = MediaType.Image_PNG;
+			} else if (extension.equalsIgnoreCase("gif")) {
+				type = MediaType.Image_GIF;
+			} else if ((extension.equalsIgnoreCase("mp4"))) {
+				type = MediaType.Video;
+			} else if ((extension.equalsIgnoreCase("hls"))) {
+				type = MediaType.HlsVideo;
+			} else if ((extension.equalsIgnoreCase("mp3"))) {
+				type = MediaType.Audio;
+			} else if ((extension.equalsIgnoreCase("doc"))
+					|| (extension.equalsIgnoreCase("docx"))
+					|| (extension.equalsIgnoreCase("xlsx"))
+					|| (extension.equalsIgnoreCase("pdf"))) {
+				type = MediaType.Document;
+			} else {
+				type = MediaType.Invalid;
+			}
+
+		} catch (Exception e) {
+			throw new ValidationException(e.getMessage(), e);
+		}
+
+		return type;
+	}
+
+	/**
+	 * Get image dimensions without loading entire image into memory
+	 * This method reads only the image header/metadata for efficient processing
+	 * 
+	 * @param inputStream InputStream of the image file
+	 * @return ImageInfo object containing width and height, or null if unable to
+	 *         read
+	 */
+	public ImageInfo getImageInfo(String fullFileName, InputStream inputStream) {
+		ImageInfo imageInfo = new ImageInfo();
+		ImageReader reader = null;
+		try {
+			String name = getFileNameOnly(fullFileName);
+			String extension = getFileNameExtension(fullFileName);
+
+			imageInfo.setName(name);
+			imageInfo.setExtn(extension);
+
+			ImageInputStream iis = ImageIO.createImageInputStream(inputStream);
+			if (null != iis) {
 				Iterator<ImageReader> readers = ImageIO.getImageReaders(iis);
-				if(readers.hasNext())
-				{
-				reader = readers.next();
+				if (readers.hasNext()) {
+					reader = readers.next();
 					reader.setInput(iis);
 					int width = reader.getWidth(0);
 					int height = reader.getHeight(0);
 					imageInfo.setWidth(width);
 					imageInfo.setHeight(height);
-					
-				}		
-				}	
+
+				}
 			}
-			catch(Exception e)
-			{
+		} catch (Exception e) {
 
+		} finally {
+			if (null != reader) {
+				reader.dispose();
 			}
-			finally {
-				if( null != reader)
-				{
-					  reader.dispose();
-				}	
-					
-				
-		  }
-		  return imageInfo;
+
 		}
-
-
-		public boolean isEmptyString(String string) {
-		    return string == null || string.isEmpty();
-		}
-
-		/**
-		 * Populate UserProfile object from User entity
-		 * This is a common utility to avoid code duplication
-		 * 
-		 * @param userProfile UserProfile object to populate
-		 * @param user User entity source
-		 */
-		public void populateUserProfile(UserProfile userProfile, User user) {
-			if (userProfile == null || user == null) {
-				logger.warn("Cannot populate UserProfile - null parameter provided");
-				return;
-			}
-			
-			userProfile.setFirstName(user.getFirstName());
-			userProfile.setLastName(user.getLastName());
-			userProfile.setUserName(user.getUserName());
-			userProfile.setNickName(user.getNickName());
-			userProfile.setEmail(user.getEmail());
-			userProfile.setMobile(user.getMobile());
-			userProfile.setGender(user.getGender());
-			userProfile.setDob(user.getDob());
-			userProfile.setSignature(user.getSignature());
-			userProfile.setAbout(user.getAbout());
-			userProfile.setFace(user.getFace());
-			userProfile.setFace200(user.getFace200());
-			userProfile.setProfileImageMediaId(user.getProfileImageMediaId());
-			userProfile.setProfileType(user.getProfileType());
-			userProfile.setStatus(user.getStatus() != null ? UserStatusType.valueOf(user.getStatus()) : UserStatusType.Unknown);
-			userProfile.setLastLogin(user.getLastLogin());
-			userProfile.setCrDate(user.getCrDate());
-			userProfile.setPrivacySettings(user.getPrivacySettings());
-			userProfile.setNotificationSettings(user.getNotificationSettings());
-			userProfile.setIsTwoStepVerificationEnabled(user.getIsTwoStepVerificationEnabled());
-			
-			logger.debug("UserProfile populated successfully for user: {}", user.getId());
-		}
-
-		public UserNotification getDefaultUserNotification()
-		{
-			UserNotification result = UserNotification.builder()
-			.callNotificaiton(true)
-			.groupNotificaiton(true)
-			.msgNotification(true)
-			.statusNotification(true)
-			.build();
-
-			return result;
-		}
-
-		public UserPrivacy getDefaultUserPrivecy()
-		{
-			UserPrivacy result = UserPrivacy.builder()
-								.callVisibility(UserPrivacyType.EveryOne)
-								.lastSeen(UserPrivacyType.EveryOne)
-								.profileVisiblity(UserPrivacyType.EveryOne)
-								.readReceipts(true)
-								.statusVisibility(UserPrivacyType.EveryOne)
-								.build();
-
-			return result;					
-		}
+		return imageInfo;
 	}
+
+	public boolean isEmptyString(String string) {
+		return string == null || string.isEmpty();
+	}
+
+	/**
+	 * Populate UserProfile object from User entity
+	 * This is a common utility to avoid code duplication
+	 * 
+	 * @param userProfile UserProfile object to populate
+	 * @param user        User entity source
+	 */
+	public void populateUserProfile(UserProfile userProfile, User user) {
+		if (userProfile == null || user == null) {
+			logger.warn("Cannot populate UserProfile - null parameter provided");
+			return;
+		}
+
+		userProfile.setFirstName(user.getFirstName());
+		userProfile.setLastName(user.getLastName());
+		userProfile.setUserName(user.getUserName());
+		userProfile.setNickName(user.getNickName());
+		userProfile.setEmail(user.getEmail());
+		userProfile.setMobile(user.getMobile());
+		userProfile.setGender(user.getGender());
+		userProfile.setDob(user.getDob());
+		userProfile.setSignature(user.getSignature());
+		userProfile.setAbout(user.getAbout());
+		userProfile.setFace(user.getFace());
+		userProfile.setFace200(user.getFace200());
+		userProfile.setProfileImageMediaId(user.getProfileImageMediaId());
+		userProfile.setProfileType(user.getProfileType());
+		userProfile.setStatus(
+				user.getStatus() != null ? UserStatusType.valueOf(user.getStatus()) : UserStatusType.Unknown);
+		userProfile.setLastLogin(user.getLastLogin());
+		userProfile.setCrDate(user.getCrDate());
+		userProfile.setPrivacySettings(user.getPrivacySettings());
+		userProfile.setNotificationSettings(user.getNotificationSettings());
+		userProfile.setIsTwoStepVerificationEnabled(user.getIsTwoStepVerificationEnabled());
+
+		if (null != user.getUserLanguage()) {
+			userProfile.setUserLanguage(user.getUserLanguage());
+		} else {
+			userProfile.setUserLanguage(UserLanguageType.English);
+		}
+
+		logger.debug("UserProfile populated successfully for user: {}", user.getId());
+	}
+
+	public UserNotification getDefaultUserNotification() {
+		UserNotification result = UserNotification.builder()
+				.callNotificaiton(true)
+				.groupNotificaiton(true)
+				.msgNotification(true)
+				.statusNotification(true)
+				.build();
+
+		return result;
+	}
+
+	public UserPrivacy getDefaultUserPrivecy() {
+		UserPrivacy result = UserPrivacy.builder()
+				.callVisibility(UserPrivacyType.EveryOne)
+				.lastSeen(UserPrivacyType.EveryOne)
+				.profileVisiblity(UserPrivacyType.EveryOne)
+				.readReceipts(true)
+				.statusVisibility(UserPrivacyType.EveryOne)
+				.build();
+
+		return result;
+	}
+}

@@ -14,8 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.anchor.app.media.exceptions.StorageServiceException;
-import com.anchor.app.util.EnvProp;
-
 import io.minio.BucketExistsArgs;
 import io.minio.GetObjectArgs;
 import io.minio.MakeBucketArgs;
@@ -31,74 +29,71 @@ import io.minio.errors.XmlParserException;
 @Service
 public class StorageService {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @Autowired
+	@Autowired
 	MinioClient minioClient;
-	  
-	public void putObject(String objectName, String bucketName, InputStream stream)
-	{
-		
-		    try {
-		    	
-		    	createBucketIfNotExists(bucketName);
-		    	
-		    	Path tempFile = Files.createTempFile("temp", ".tmp");
-		        
-		    	Files.copy(stream, tempFile, StandardCopyOption.REPLACE_EXISTING);
-		        
-		    	putObject(tempFile,objectName, bucketName);
-		    	
-	        } catch (Exception e) {
-	           throw new RuntimeException(e.getMessage());
-	        }
-		
+
+	public void putObject(String objectName, String bucketName, InputStream stream) {
+
+		try {
+
+			createBucketIfNotExists(bucketName);
+
+			Path tempFile = Files.createTempFile("temp", ".tmp");
+
+			Files.copy(stream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+
+			putObject(tempFile, objectName, bucketName);
+
+		} catch (Exception e) {
+			throw new RuntimeException(e.getMessage());
+		}
+
 	}
 
-    private void putObject(Path filePath,String objectName, String bucketName)
-	{
-		
-		    try {
-		    	
-		    	UploadObjectArgs.Builder builder = UploadObjectArgs.builder().bucket(bucketName)
-		    			  .object(objectName).filename(filePath.toString());
-		    	 
-		    	 minioClient.uploadObject(builder.build());
-		    	
-	        } catch (Exception e) {
-	           throw new RuntimeException(e.getMessage());
-	        }
-		
+	private void putObject(Path filePath, String objectName, String bucketName) {
+
+		try {
+
+			UploadObjectArgs.Builder builder = UploadObjectArgs.builder().bucket(bucketName)
+					.object(objectName).filename(filePath.toString());
+
+			minioClient.uploadObject(builder.build());
+
+		} catch (Exception e) {
+			throw new RuntimeException(e.getMessage());
+		}
+
 	}
 
-    private void createBucketIfNotExists(String bucketName) throws InvalidKeyException, ErrorResponseException, InsufficientDataException, InternalException, InvalidResponseException, NoSuchAlgorithmException, ServerException, XmlParserException, IllegalArgumentException, IOException
-	{
-		 boolean isExist = minioClient
-		          .bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
-		      if (!isExist) {
-		      
-		    	  minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
-		      }
-		      
-	}
+	private void createBucketIfNotExists(String bucketName) throws InvalidKeyException, ErrorResponseException,
+			InsufficientDataException, InternalException, InvalidResponseException, NoSuchAlgorithmException,
+			ServerException, XmlParserException, IllegalArgumentException, IOException {
+		boolean isExist = minioClient
+				.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
+		if (!isExist) {
 
+			minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
+		}
+
+	}
 
 	public InputStream getContenStream(String contentID, String bucketName) throws StorageServiceException {
-		
+
 		InputStream stream = null;
-		 try {
-			
-		     GetObjectArgs objReq =  GetObjectArgs.builder().bucket(bucketName).object(contentID).build();
-	         stream =minioClient.getObject(objReq);
-	        
-		 } catch ( Exception e) {
-	          
-	        	throw new StorageServiceException(e.getMessage(), e);
-	      }
-		 	
-		 return stream;
+		try {
+
+			GetObjectArgs objReq = GetObjectArgs.builder().bucket(bucketName).object(contentID).build();
+			stream = minioClient.getObject(objReq);
+
+		} catch (Exception e) {
+
+			throw new StorageServiceException(e.getMessage(), e);
+		}
+
+		return stream;
 
 	}
-
 
 }

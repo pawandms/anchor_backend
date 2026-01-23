@@ -7,6 +7,8 @@ import com.anchor.app.oauth.enums.UserStatusType;
 import com.anchor.app.oauth.enums.VisibilityType;
 import com.anchor.app.oauth.model.User;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.anchor.app.users.dto.UserPrivacy;
+import com.anchor.app.users.enums.UserLanguageType; // [NEW]
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import lombok.AllArgsConstructor;
@@ -16,14 +18,15 @@ import lombok.NoArgsConstructor;
 
 /**
  * Data Transfer Object for User Profile
- * This DTO allows for flexible field management and separation from the domain model
+ * This DTO allows for flexible field management and separation from the domain
+ * model
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class UserProfile  extends BaseVo {
+public class UserProfile extends BaseVo {
     private static final long serialVersionUID = 1L;
 
     private String id;
@@ -34,10 +37,10 @@ public class UserProfile  extends BaseVo {
     private String email;
     private String mobile;
     private GenderType gender;
-    
+
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date dob;
-    
+
     private String signature;
     private String about;
     private String face;
@@ -50,7 +53,8 @@ public class UserProfile  extends BaseVo {
     private UserPrivacy privacySettings;
     private UserNotification notificationSettings;
     private Boolean isTwoStepVerificationEnabled;
-    
+    private UserLanguageType userLanguage;
+
     /**
      * Convert User entity to UserProfileDTO
      * 
@@ -61,7 +65,7 @@ public class UserProfile  extends BaseVo {
         if (user == null) {
             return null;
         }
-        
+
         return UserProfile.builder()
                 .id(user.getId())
                 .firstName(user.getFirstName())
@@ -84,6 +88,8 @@ public class UserProfile  extends BaseVo {
                 .privacySettings(user.getPrivacySettings())
                 .notificationSettings(user.getNotificationSettings())
                 .isTwoStepVerificationEnabled(user.getIsTwoStepVerificationEnabled())
+                .userLanguage(user.getUserLanguage() != null ? user.getUserLanguage()
+                        : com.anchor.app.users.enums.UserLanguageType.English)
                 .build();
     }
 }

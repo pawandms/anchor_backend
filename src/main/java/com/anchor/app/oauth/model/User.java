@@ -13,6 +13,7 @@ import com.anchor.app.oauth.enums.GenderType;
 import com.anchor.app.oauth.enums.VisibilityType;
 import com.anchor.app.users.dto.UserNotification;
 import com.anchor.app.users.dto.UserPrivacy;
+import com.anchor.app.users.enums.UserLanguageType;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,69 +26,64 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Document("user")
 public class User implements Serializable {
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	@Id
-	private String id;
+    @Id
+    private String id;
 
-	@TextIndexed 
+    @TextIndexed
     private String firstName;
-    
-    @TextIndexed 
-    private String lastName;
-    
 
-    //User name
+    @TextIndexed
+    private String lastName;
+
+    // User name
     @Field("userName")
-	private String userName;
-    //User nickname
+    private String userName;
+    // User nickname
     private String nickName;
-    //Is it super administrator
+    // Is it super administrator
     private boolean admin;
-    //Gender
+    // Gender
     private GenderType gender;
-    //Birthday
+    // Birthday
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date dob;
-    //Personal signature
+    // Personal signature
     private String signature;
-    //email
+    // email
     private String email;
-    //email
+    // email
     private Long emailBindTime;
-    //mobile
+    // mobile
     private String mobile;
-    //mobile
+    // mobile
     private Long mobileBindTime;
-    //Head portrait
+    // Head portrait
     private String face;
-    //Head portrait200*200
+    // Head portrait200*200
     private String face200;
-    //Original image
+    // Original image
     private String profileImageMediaId;
-    //State 2 normal user 3 forbidden user 4 virtual user 5 operation
+    // State 2 normal user 3 forbidden user 4 virtual user 5 operation
     private Integer status;
-    
-     // Audit fields
+
+    // Audit fields
     private String crUser;
     private Date crDate;
     private String modUser;
     private Date modDate;
-    
+
     private VisibilityType profileType;
     private Date lastLogin;
-    
+
     private Integer type;
-	
-	
-	private String about;
+
+    private String about;
     private String publicKey;
     private UserPrivacy privacySettings;
     private UserNotification notificationSettings;
     private Boolean isTwoStepVerificationEnabled;
-   
+    private UserLanguageType userLanguage;
 
-	
-
-	
 }
