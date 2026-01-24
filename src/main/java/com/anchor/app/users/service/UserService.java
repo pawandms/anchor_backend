@@ -670,7 +670,8 @@ public class UserService {
             // Validate that at least one field is provided
             if (request.getFirstName() == null && request.getLastName() == null &&
                     request.getNickName() == null && request.getMobile() == null && request.getEmail() == null
-                    && request.getUserLanguage() == null) {
+                    && request.getUserLanguage() == null && request.getGender() == null
+                    && request.getProfileType() == null && request.getDob() == null) {
                 request.setValid(false);
                 request.getErrors().add(new ErrorMsg(
                         ValidationErrorType.Invalid_Request.name(),
@@ -688,6 +689,15 @@ public class UserService {
                             "email",
                             "Invalid email format"));
                 }
+            }
+
+            // Validate DOB is not in the future
+            if (request.getDob() != null && request.getDob().after(new Date())) {
+                request.setValid(false);
+                request.getErrors().add(new ErrorMsg(
+                        ValidationErrorType.Invalid_Request.name(),
+                        "dob",
+                        "Date of birth cannot be in the future"));
             }
 
         } catch (Exception e) {
@@ -867,9 +877,24 @@ public class UserService {
                 userLanguage = request.getUserLanguage();
             }
 
+            GenderType gender = currentUser.getGender();
+            if (request.getGender() != null) {
+                gender = request.getGender();
+            }
+
+            VisibilityType profileType = currentUser.getProfileType();
+            if (request.getProfileType() != null) {
+                profileType = request.getProfileType();
+            }
+
+            Date dob = currentUser.getDob();
+            if (request.getDob() != null) {
+                dob = request.getDob();
+            }
+
             // Update using repository method
             userRepository.updateUserInfo(userId, firstName, lastName, nickName, mobile, mobileBindTime,
-                    email, userName, emailBindTime, userLanguage, userId, new Date());
+                    email, userName, emailBindTime, userLanguage, gender, profileType, dob, userId, new Date());
 
         } catch (Exception e) {
             throw new UserServiceException("Failed to perform user info update: " + e.getMessage(), e);

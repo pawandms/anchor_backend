@@ -26,18 +26,35 @@ public class DatabaseUserDetailsService implements UserDetailsManager {
     @Autowired
     MongoTemplate mongoTemplate;
 
+    @Autowired
+    private com.anchor.app.users.repository.UserRepository userRepository;
 
-    
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-      //Identifier: 1 mobile number 2 email 3 user name 4qq 5 wechat 6 Tencent Weibo 7 Sina Weibo
-        UserAuth userAuth = mongoTemplate.findOne(new Query(Criteria.where("identifier").is(username)), UserAuth.class, USER_CONLLECTION);
-        if(userAuth == null) {
-            throw new RuntimeException ("no user information is found");
+        // Identifier: 1 mobile number 2 email 3 user name 4qq 5 wechat 6 Tencent Weibo
+        // 7 Sina Weibo
+        UserAuth userAuth = mongoTemplate.findOne(new Query(Criteria.where("identifier").is(username)), UserAuth.class,
+                USER_CONLLECTION);
+
+        // If not found by identifier, try to find by mobile
+
+        if (userAuth == null) {
+            java.util.Optional<com.anchor.app.oauth.model.User> userOpt = userRepository.findByMobile(username);
+            if (userOpt.isPresent()) {
+                String userId = userOpt.get().getId();
+                userAuth = mongoTemplate.findById(userId, UserAuth.class, USER_CONLLECTION);
+                username = userAuth.getIdentifier();
+            }
         }
-        User user=  new User(username, userAuth.getCertificate(), userAuth.isEnabled(), userAuth.isAccountNonExpired(), 
-        		userAuth.isCredentialsNonExpired(), userAuth.isAccountNonLocked(), mapToGrantedAuthorities(userAuth.getRoles()));
-       
+
+        if (userAuth == null) {
+            throw new RuntimeException("no user information is found");
+        }
+        User user = new User(userAuth.getIdentifier(), userAuth.getCertificate(), userAuth.isEnabled(),
+                userAuth.isAccountNonExpired(),
+                userAuth.isCredentialsNonExpired(), userAuth.isAccountNonLocked(),
+                mapToGrantedAuthorities(userAuth.getRoles()));
+
         return user;
     }
 
@@ -53,7 +70,7 @@ public class DatabaseUserDetailsService implements UserDetailsManager {
 
     @Override
     public void deleteUser(String username) {
-       throw new UnsupportedOperationException("Delete user not implemented");
+        throw new UnsupportedOperationException("Delete user not implemented");
     }
 
     @Override
@@ -62,33 +79,26 @@ public class DatabaseUserDetailsService implements UserDetailsManager {
         throw new UnsupportedOperationException("Change password not implemented");
     }
 
-    
-
-    
     private static List<GrantedAuthority> mapToGrantedAuthorities(List<String> authorities) {
         return authorities.stream()
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
     }
 
-        @Override
-    public boolean userExists(String username) 
-    {
+    @Override
+    public boolean userExists(String username) {
         boolean result = false;
         try {
-            UserAuth userAuth = mongoTemplate.findOne(new Query(Criteria.where("identifier").is(username)), UserAuth.class, USER_CONLLECTION);
-            if(userAuth != null) 
-            {
-            result = true;
+            UserAuth userAuth = mongoTemplate.findOne(new Query(Criteria.where("identifier").is(username)),
+                    UserAuth.class, USER_CONLLECTION);
+            if (userAuth != null) {
+                result = true;
             }
 
         } catch (Exception e) {
             logger.error("Error checking if user exists: " + e.getMessage(), e);
         }
-       return result;
+        return result;
     }
 
-
-
-    
 }
