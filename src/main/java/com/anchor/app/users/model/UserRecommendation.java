@@ -1,5 +1,6 @@
 package com.anchor.app.users.model;
 
+import com.anchor.app.oauth.enums.VisibilityType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -34,6 +35,8 @@ public class UserRecommendation {
 
     private List<String> mutualFriendIds;
     private List<String> mutualChannelIds; // Represents "circles" or groups
+
+    private VisibilityType profileType;
 
     private Double score; // Priority/Relevance score
 

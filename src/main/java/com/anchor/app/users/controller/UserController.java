@@ -9,9 +9,14 @@ import com.anchor.app.users.dto.RecommendationProfile;
 import com.anchor.app.users.service.RecommendationService;
 import com.anchor.app.users.service.UserService;
 
+import com.anchor.app.util.EnvProp;
+import com.anchor.app.util.HelperBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -32,6 +38,12 @@ public class UserController {
 
     @Autowired
     private RecommendationService recommendationService;
+
+    @Autowired
+    private EnvProp envProp;
+
+    @Autowired
+    private HelperBean helperBean;
 
     /**
      * Upload or update user profile image
@@ -272,14 +284,23 @@ public class UserController {
      */
     @GetMapping(value = "{userId}/recommendations", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getRecommendations(
-            @PathVariable String userId) {
+            @PathVariable String userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) List<String> sort) {
 
         RecommendationProfile req = new RecommendationProfile();
         req.setId(userId);
 
         try {
             logger.info("Fetching recommendations for userId: {}", userId);
-            recommendationService.getRecommendations(req);
+
+            // Construct Pageable with dynamic sorting
+            int pageSize = (size != null) ? size : envProp.getRecommendationPageSize();
+            Sort sortObj = helperBean.parseSortParameters(sort);
+            Pageable pageable = PageRequest.of(page, pageSize, sortObj);
+
+            recommendationService.getRecommendations(req, pageable);
 
             if (req.isValid()) {
                 return ResponseEntity.status(HttpStatus.OK).body(req);

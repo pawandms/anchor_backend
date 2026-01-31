@@ -17,4 +17,10 @@ import java.util.List;
 public class RecommendationProfile extends BaseVo {
     private String id; // The user ID for whom recommendations are generated
     private List<UserRecommendation> recommendations;
+
+    // Pagination metadata
+    private long totalElements;
+    private int totalPages;
+    private int currentPage;
+    private int pageSize;
 }

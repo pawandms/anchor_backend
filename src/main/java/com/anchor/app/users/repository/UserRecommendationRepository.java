@@ -1,15 +1,15 @@
 package com.anchor.app.users.repository;
 
 import com.anchor.app.users.model.UserRecommendation;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 @Repository
 public interface UserRecommendationRepository extends MongoRepository<UserRecommendation, String> {
 
-    List<UserRecommendation> findByUserIdOrderByScoreDesc(String userId);
+    Page<UserRecommendation> findByUserId(String userId, Pageable pageable);
 
     void deleteByUserId(String userId);
 

@@ -1,12 +1,13 @@
 package com.anchor.app.util;
 
 import java.io.InputStream;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
 
 import javax.imageio.ImageIO;
@@ -18,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -281,5 +283,37 @@ public class HelperBean {
 				.build();
 
 		return result;
+	}
+
+	/**
+	 * Parse sort strings (e.g., "fieldName.order") into Spring Data Sort.
+	 * 
+	 * @param sortParams List of sort strings
+	 * @return Sort object
+	 */
+	public Sort parseSortParameters(List<String> sortParams) {
+		if (sortParams == null || sortParams.isEmpty()) {
+			// Default sorting by score descending
+			return Sort.by(Sort.Direction.DESC, "score");
+		}
+
+		List<Sort.Order> orders = new ArrayList<>();
+		for (String sortParam : sortParams) {
+			if (sortParam.contains(".")) {
+				String[] parts = sortParam.split("\\.");
+				String field = parts[0];
+				String direction = parts[1];
+
+				if (direction.equalsIgnoreCase("desc")) {
+					orders.add(Sort.Order.desc(field));
+				} else {
+					orders.add(Sort.Order.asc(field));
+				}
+			} else {
+				// Default to ascending if no direction specified
+				orders.add(Sort.Order.asc(sortParam));
+			}
+		}
+		return Sort.by(orders);
 	}
 }

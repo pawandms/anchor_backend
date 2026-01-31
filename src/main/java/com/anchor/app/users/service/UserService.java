@@ -682,12 +682,22 @@ public class UserService {
             if (request.getFirstName() == null && request.getLastName() == null &&
                     request.getNickName() == null && request.getMobile() == null && request.getEmail() == null
                     && request.getUserLanguage() == null && request.getGender() == null
-                    && request.getProfileType() == null && request.getDob() == null) {
+                    && request.getProfileType() == null && request.getDob() == null
+                    && (request.getLocation() == null || request.getLocation().length == 0)) {
                 request.setValid(false);
                 request.getErrors().add(new ErrorMsg(
                         ValidationErrorType.Invalid_Request.name(),
                         "request",
                         "At least one field must be provided for update"));
+            }
+
+            // Validate location array if provided
+            if (request.getLocation() != null && request.getLocation().length == 0) {
+                request.setValid(false);
+                request.getErrors().add(new ErrorMsg(
+                        ValidationErrorType.Invalid_Request.name(),
+                        "location",
+                        "Location array cannot be empty"));
             }
 
             // Validate email format if provided

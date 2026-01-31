@@ -26,20 +26,17 @@ spring:
     use:
       path-segment: 1
 
+  data:
+    mongodb:
+      auto-index-creation: true
   mongodb:
     uri: mongodb://admin:admin123@localhost:27018/msgdb?authSource=admin
     database: msgdb
-  
-# Legacy properties for backward compatibility
-#mongodb:
-#  database: msgdb
-#  url: mongodb://admin:admin123@localhost:27018/msgdb?authSource=admin
 
-thymeleaf:
-      cache: false
-      enabled: true
-      prefix: classpath:/templates/
-      suffix: .html
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
 
 
 ---

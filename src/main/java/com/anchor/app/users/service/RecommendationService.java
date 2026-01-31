@@ -1,13 +1,14 @@
 package com.anchor.app.users.service;
 
-import com.anchor.app.msg.enums.ChannelSubType;
 import com.anchor.app.msg.enums.ContactType;
 import com.anchor.app.msg.model.Channel;
 import com.anchor.app.msg.model.ChannelMember;
 import com.anchor.app.msg.model.UserContact;
 import com.anchor.app.msg.repository.ChannelMemberRepository;
 import com.anchor.app.msg.repository.ChannelRepository;
+import com.anchor.app.msg.repository.ContactRequestRepository;
 import com.anchor.app.oauth.dto.AuthReq;
+import com.anchor.app.msg.enums.ResponseType;
 import com.anchor.app.oauth.enums.PermissionType;
 import com.anchor.app.oauth.model.User;
 import com.anchor.app.oauth.service.AuthService;
@@ -16,8 +17,11 @@ import com.anchor.app.users.model.UserRecommendation;
 import com.anchor.app.users.repository.UserRecommendationRepository;
 import com.anchor.app.users.repository.UserRepository;
 
+import com.anchor.app.oauth.enums.VisibilityType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -35,15 +39,17 @@ public class RecommendationService {
     private final UserRepository userRepository;
     private final ChannelRepository channelRepository;
     private final ChannelMemberRepository memberRepository;
+    private final ContactRequestRepository contactRequestRepository;
     private final MongoTemplate mongoTemplate;
     private final AuthService authService;
 
     /**
      * Get stored recommendations for a user.
      * 
-     * @param request DTO to fill with results and validation status
+     * @param request  DTO to fill with results and validation status
+     * @param pageable Pagination info from request
      */
-    public void getRecommendations(RecommendationProfile request) {
+    public void getRecommendations(RecommendationProfile request, Pageable pageable) {
         try {
             String userId = request.getId();
             log.info("Fetching stored recommendations for user: {}", userId);
@@ -57,8 +63,13 @@ public class RecommendationService {
                 return;
             }
 
-            List<UserRecommendation> recommendations = recommendationRepository.findByUserIdOrderByScoreDesc(userId);
-            request.setRecommendations(recommendations);
+            Page<UserRecommendation> recommendationsPage = recommendationRepository.findByUserId(userId,
+                    pageable);
+            request.setRecommendations(recommendationsPage.getContent());
+            request.setTotalElements(recommendationsPage.getTotalElements());
+            request.setTotalPages(recommendationsPage.getTotalPages());
+            request.setCurrentPage(recommendationsPage.getNumber());
+            request.setPageSize(recommendationsPage.getSize());
             request.setValid(true);
 
         } catch (Exception e) {
@@ -104,15 +115,15 @@ public class RecommendationService {
         Set<String> excludedIds = new HashSet<>(friendIds);
         excludedIds.add(userId);
 
-        // 2. Get user's groups (circles)
-        List<String> userChannelIds = memberRepository.findByUserId(userId).stream()
-                .map(ChannelMember::getChannelId)
-                .collect(Collectors.toList());
+        // 1b. Exclude users with pending or rejected invitations
+        List<ResponseType> excludeTypes = Arrays.asList(ResponseType.PENDING, ResponseType.REJECTED);
+        contactRequestRepository.findByUserIdAndResponseTypeIn(userId, excludeTypes).forEach(req -> {
+            excludedIds.add(req.getFromUserId());
+            excludedIds.add(req.getToUserId());
+        });
 
-        // FIX: Explicitly ignore channels with subType: Self
-        List<String> groupChannelIds = channelRepository.findAllById(userChannelIds).stream()
-                .filter(c -> ChannelSubType.GROUP.equals(c.getSubType()))
-                .filter(c -> !ChannelSubType.Self.equals(c.getSubType()))
+        // 2. Get user's groups (circles) using efficient aggregation
+        List<String> groupChannelIds = channelRepository.findUserGroupChannels(userId).stream()
                 .map(Channel::getId)
                 .collect(Collectors.toList());
 
@@ -183,20 +194,24 @@ public class RecommendationService {
             if (userOpt.isPresent()) {
                 User recUser = userOpt.get();
 
-                UserRecommendation rec = UserRecommendation.builder()
-                        .userId(userId)
-                        .recommendedUserId(recUserId)
-                        .firstName(recUser.getFirstName())
-                        .lastName(recUser.getLastName())
-                        .face(recUser.getFace())
-                        .description(generateDescription(data))
-                        .mutualFriendIds(new ArrayList<>(data.mutualFriendIds))
-                        .mutualChannelIds(new ArrayList<>(data.mutualChannelIds))
-                        .score(calculateScore(data))
-                        .createdAt(new Date())
-                        .build();
+                // Requirement: select only user who have profile type Public
+                if (VisibilityType.Public.equals(recUser.getProfileType())) {
+                    UserRecommendation rec = UserRecommendation.builder()
+                            .userId(userId)
+                            .recommendedUserId(recUserId)
+                            .firstName(recUser.getFirstName())
+                            .lastName(recUser.getLastName())
+                            .face(recUser.getFace())
+                            .description(generateDescription(data))
+                            .mutualFriendIds(new ArrayList<>(data.mutualFriendIds))
+                            .mutualChannelIds(new ArrayList<>(data.mutualChannelIds))
+                            .profileType(recUser.getProfileType()) // Store profile type
+                            .score(calculateScore(data))
+                            .createdAt(new Date())
+                            .build();
 
-                recommendations.add(rec);
+                    recommendations.add(rec);
+                }
             }
         }
 
