@@ -218,7 +218,7 @@ public class HelperBean {
 	 * @param userProfile UserProfile object to populate
 	 * @param user        User entity source
 	 */
-	public void populateUserProfile(UserProfile userProfile, User user) {
+	public void populateUserProfile(UserProfile userProfile, User user, boolean isPartialAccess) {
 		if (userProfile == null || user == null) {
 			logger.warn("Cannot populate UserProfile - null parameter provided");
 			return;
@@ -227,16 +227,8 @@ public class HelperBean {
 		userProfile.setFirstName(user.getFirstName());
 		userProfile.setLastName(user.getLastName());
 		userProfile.setUserName(user.getUserName());
-		userProfile.setNickName(user.getNickName());
-		userProfile.setEmail(user.getEmail());
-		userProfile.setMobile(user.getMobile());
 		userProfile.setGender(user.getGender());
-		userProfile.setDob(user.getDob());
-		userProfile.setSignature(user.getSignature());
-		userProfile.setAbout(user.getAbout());
-		userProfile.setFace(user.getFace());
-		userProfile.setFace200(user.getFace200());
-		userProfile.setProfileImageMediaId(user.getProfileImageMediaId());
+
 		userProfile.setProfileType(user.getProfileType());
 		userProfile.setStatus(
 				user.getStatus() != null ? UserStatusType.valueOf(user.getStatus()) : UserStatusType.Unknown);
@@ -245,11 +237,24 @@ public class HelperBean {
 		userProfile.setPrivacySettings(user.getPrivacySettings());
 		userProfile.setNotificationSettings(user.getNotificationSettings());
 		userProfile.setIsTwoStepVerificationEnabled(user.getIsTwoStepVerificationEnabled());
+		userProfile.setSignature(user.getSignature());
+		userProfile.setAbout(user.getAbout());
+		userProfile.setFace(user.getFace());
+		userProfile.setFace200(user.getFace200());
+		userProfile.setProfileImageMediaId(user.getProfileImageMediaId());
 
 		if (null != user.getUserLanguage()) {
 			userProfile.setUserLanguage(user.getUserLanguage());
 		} else {
 			userProfile.setUserLanguage(UserLanguageType.English);
+		}
+
+		if (!isPartialAccess) {
+			userProfile.setNickName(user.getNickName());
+			userProfile.setMobile(user.getMobile());
+			userProfile.setDob(user.getDob());
+			userProfile.setEmail(user.getEmail());
+
 		}
 
 		logger.debug("UserProfile populated successfully for user: {}", user.getId());

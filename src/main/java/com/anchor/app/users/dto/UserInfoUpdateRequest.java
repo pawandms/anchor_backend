@@ -33,6 +33,7 @@ public class UserInfoUpdateRequest extends BaseVo {
     private GenderType gender;
     private VisibilityType profileType;
     private Date dob;
+    private double[] location;
 
     @Transient
     @JsonIgnore

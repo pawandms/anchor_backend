@@ -2,7 +2,10 @@ package com.anchor.app.oauth.model;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
+
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
 import org.springframework.data.mongodb.core.index.TextIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -14,6 +17,7 @@ import com.anchor.app.oauth.enums.VisibilityType;
 import com.anchor.app.users.dto.UserNotification;
 import com.anchor.app.users.dto.UserPrivacy;
 import com.anchor.app.users.enums.UserLanguageType;
+import com.anchor.app.users.enums.UserRoleType;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -85,5 +89,9 @@ public class User implements Serializable {
     private UserNotification notificationSettings;
     private Boolean isTwoStepVerificationEnabled;
     private UserLanguageType userLanguage;
+    private List<UserRoleType> userRoles;
+
+    @GeoSpatialIndexed
+    private double[] location; // [longitude, latitude]
 
 }

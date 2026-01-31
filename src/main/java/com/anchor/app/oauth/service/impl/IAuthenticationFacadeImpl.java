@@ -9,16 +9,20 @@ import org.springframework.stereotype.Service;
 import com.anchor.app.oauth.exceptions.AuthServiceException;
 import com.anchor.app.oauth.model.User;
 import com.anchor.app.oauth.service.IAuthenticationFacade;
+import com.anchor.app.users.repository.UserRepository;
 import com.anchor.app.users.service.UserService;
 
 @Service
 public class IAuthenticationFacadeImpl implements IAuthenticationFacade {
 
-	 private final Logger logger = LoggerFactory.getLogger(this.getClass());
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	@Autowired
 	private UserService userService;
-	
+
+	@Autowired
+	private UserRepository userRepository;
+
 	@Override
 	public Authentication getAuthentication() {
 		return SecurityContextHolder.getContext().getAuthentication();
@@ -26,32 +30,39 @@ public class IAuthenticationFacadeImpl implements IAuthenticationFacade {
 
 	@Override
 	public User getApiAuthenticationDetails() throws AuthServiceException {
-		
+
 		User key = null;
 
-	       try {
-	           Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-	           
-	           String principal = null;
-	           if (authentication != null && authentication.getName() != null) {
-	               principal = authentication.getName();
-	           }
+		try {
+			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-	           if( null != principal)
-	           {
-	        	 key=  userService.getUserDetails(principal);
-	           }
+			String principal = null;
+			if (authentication != null && authentication.getName() != null) {
+				principal = authentication.getName();
+			}
 
-	       }
-	       catch(Exception e)
-	       {
-				logger.error(e.getMessage(), e);
-	            throw new AuthServiceException(e.getMessage(), e);
-	       }
+			if (null != principal) {
+				key = userService.getUserDetails(principal);
+			}
 
-	        return key;
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			throw new AuthServiceException(e.getMessage(), e);
+		}
+
+		return key;
 	}
 
-	
-}
+	@Override
+	public User getUserById(String userId) throws AuthServiceException {
+		User result = null;
+		try {
+			result = userRepository.findById(userId).orElse(null);
+		} catch (Exception e) {
+			logger.error("Error fetching user by id: {}", userId, e);
+			throw new AuthServiceException("Error fetching user by id: " + userId, e);
+		}
+		return result;
+	}
 
+}

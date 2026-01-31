@@ -54,6 +54,7 @@ public class UserProfile extends BaseVo {
     private UserNotification notificationSettings;
     private Boolean isTwoStepVerificationEnabled;
     private UserLanguageType userLanguage;
+    private double[] location;
 
     /**
      * Convert User entity to UserProfileDTO
@@ -81,6 +82,7 @@ public class UserProfile extends BaseVo {
                 .face(user.getFace())
                 .face200(user.getFace200())
                 .profileImageMediaId(user.getProfileImageMediaId())
+                .location(user.getLocation())
                 .profileType(user.getProfileType())
                 .status(user.getStatus() != null ? UserStatusType.valueOf(user.getStatus()) : null)
                 .lastLogin(user.getLastLogin())
@@ -90,6 +92,7 @@ public class UserProfile extends BaseVo {
                 .isTwoStepVerificationEnabled(user.getIsTwoStepVerificationEnabled())
                 .userLanguage(user.getUserLanguage() != null ? user.getUserLanguage()
                         : com.anchor.app.users.enums.UserLanguageType.English)
+                .location(user.getLocation())
                 .build();
     }
 }

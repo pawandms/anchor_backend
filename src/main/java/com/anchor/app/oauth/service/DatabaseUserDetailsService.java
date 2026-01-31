@@ -15,6 +15,7 @@ import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Service;
 
 import com.anchor.app.oauth.model.UserAuth;
+import com.anchor.app.users.enums.UserRoleType;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -79,9 +80,12 @@ public class DatabaseUserDetailsService implements UserDetailsManager {
         throw new UnsupportedOperationException("Change password not implemented");
     }
 
-    private static List<GrantedAuthority> mapToGrantedAuthorities(List<String> authorities) {
+    private static List<GrantedAuthority> mapToGrantedAuthorities(List<UserRoleType> authorities) {
+        if (authorities == null) {
+            return List.of();
+        }
         return authorities.stream()
-                .map(SimpleGrantedAuthority::new)
+                .map(role -> new SimpleGrantedAuthority(role.name()))
                 .collect(Collectors.toList());
     }
 

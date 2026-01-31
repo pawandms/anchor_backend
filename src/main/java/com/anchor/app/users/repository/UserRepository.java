@@ -107,12 +107,13 @@ public interface UserRepository extends MongoRepository<User, String> {
          * @param modDate        Modification date
          */
         @Query("{ '_id': ?0 }")
-        @Update("{ '$set': { 'firstName': ?1, 'lastName': ?2, 'nickName': ?3, 'mobile': ?4, 'mobileBindTime': ?5, 'email': ?6, 'userName': ?7, 'emailBindTime': ?8, 'userLanguage': ?9, 'gender': ?10, 'profileType': ?11, 'dob': ?12, 'modUser': ?13, 'modDate': ?14 } }")
+        @Update("{ '$set': { 'firstName': ?1, 'lastName': ?2, 'nickName': ?3, 'mobile': ?4, 'mobileBindTime': ?5, 'email': ?6, 'userName': ?7, 'emailBindTime': ?8, 'userLanguage': ?9, 'gender': ?10, 'profileType': ?11, 'dob': ?12, 'location': ?13, 'modUser': ?14, 'modDate': ?15 } }")
         void updateUserInfo(String userId, String firstName, String lastName, String nickName,
                         String mobile, Long mobileBindTime, String email, String userName,
                         Long emailBindTime, com.anchor.app.users.enums.UserLanguageType userLanguage,
                         com.anchor.app.oauth.enums.GenderType gender,
                         com.anchor.app.oauth.enums.VisibilityType profileType,
                         Date dob,
+                        double[] location,
                         String modUser, Date modDate);
 }

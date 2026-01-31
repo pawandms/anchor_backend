@@ -37,6 +37,7 @@ import com.anchor.app.util.enums.SequenceType;
 
 import java.util.Date;
 import java.util.Optional;
+import java.util.ArrayList;
 
 @Service
 public class UserService {
@@ -83,7 +84,7 @@ public class UserService {
 
             // Set default values if not provided
             if (request.getRole() == null) {
-                request.setRole(UserRoleType.GENERAL_USER);
+                request.setRole(UserRoleType.GeneralUser);
             }
             if (request.getProfileType() == null) {
                 request.setProfileType(VisibilityType.Public);
@@ -214,6 +215,7 @@ public class UserService {
                     .notificationSettings(helperBean.getDefaultUserNotification())
                     .privacySettings(helperBean.getDefaultUserPrivecy())
                     .userLanguage(UserLanguageType.English)
+                    .userRoles(java.util.Collections.singletonList(request.getRole()))
                     .crUser(userId)
                     .crDate(now)
                     .modUser(userId)
@@ -235,7 +237,7 @@ public class UserService {
                     .accountNonExpired(true)
                     .accountNonLocked(true)
                     .credentialsNonExpired(true)
-                    .roles(java.util.Collections.singletonList(request.getRole().name()))
+                    .roles(java.util.Collections.singletonList(request.getRole()))
                     .crUser(userId)
                     .crDate(now)
                     .modUser(userId)
@@ -318,15 +320,20 @@ public class UserService {
                 throw new AuthServiceException("Invalid Permission");
             }
 
-            // Fetch user profile
-            Optional<User> userOpt = userRepository.findById(request.getId());
+            User user = null;
 
-            if (userOpt.isPresent()) {
-                logger.info("User profile found for userId: {}", request.getId());
-                User user = userOpt.get();
+            if (null != authReq.getTargetUser()) {
+                user = authReq.getTargetUser();
+            } else {
+                Optional<User> userOpt = userRepository.findById(request.getId());
+                if (userOpt.isPresent()) {
+                    user = userOpt.get();
+                }
+            }
 
+            if (null != user) {
                 // Populate request object with user data using helper method
-                helperBean.populateUserProfile(request, user);
+                helperBean.populateUserProfile(request, user, authReq.isPartialAccess());
 
             } else {
                 logger.warn("User profile not found for userId: {}", request.getId());
@@ -343,6 +350,7 @@ public class UserService {
         }
     }
 
+    // Used in Authentication Facade
     public User getUserDetails(String userName) throws UserServiceException {
 
         User user = null;
@@ -355,6 +363,9 @@ public class UserService {
 
                 if (userOpt.isPresent()) {
                     user = userOpt.get();
+                    if (userAuth.getRoles() != null && !userAuth.getRoles().isEmpty()) {
+                        user.setUserRoles(new ArrayList<>(userAuth.getRoles()));
+                    }
                 }
 
             }
@@ -892,9 +903,15 @@ public class UserService {
                 dob = request.getDob();
             }
 
+            double[] location = currentUser.getLocation();
+            if (request.getLocation() != null) {
+                location = request.getLocation();
+            }
+
             // Update using repository method
             userRepository.updateUserInfo(userId, firstName, lastName, nickName, mobile, mobileBindTime,
-                    email, userName, emailBindTime, userLanguage, gender, profileType, dob, userId, new Date());
+                    email, userName, emailBindTime, userLanguage, gender, profileType, dob, location, userId,
+                    new Date());
 
         } catch (Exception e) {
             throw new UserServiceException("Failed to perform user info update: " + e.getMessage(), e);
